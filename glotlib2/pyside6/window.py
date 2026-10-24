@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout
 
+from .gl_context import GLContext
 from .gl_widget import GLWidget
 
 
@@ -9,6 +10,8 @@ class Window:
         self.qt_window.setWindowTitle(name)
         self.qt_window.resize(w, h)
         self.qt_window.move(x, y)
+
+        self.ctx = GLContext(msaa=msaa)
 
         layout = QHBoxLayout(self.qt_window)
         self.gl_widget = GLWidget(self, msaa, parent=self.qt_window)
