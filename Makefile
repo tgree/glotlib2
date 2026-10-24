@@ -10,6 +10,7 @@ MODULES := \
 	glotlib2/font_files/*.py \
 	glotlib2/font_files/ttf_bitstream_vera_1_10/* \
 	glotlib2/*.py \
+	glotlib2/glfw/*.py \
 	glotlib2/pyside6/*.py
 PYTHON := python3
 
