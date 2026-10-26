@@ -27,7 +27,11 @@ class GLWidget(QOpenGLWidget):
     def initializeGL(self):
         try:
             self._validate_gl_profile()
-            self._glotlib_window.ctx._init_gl(QOpenGLContext.currentContext())
+            ctx_w, ctx_h = self.width(), self.height()
+            surface_dim = self.context().surface().size()
+            fb_w, fb_h = surface_dim.width(), surface_dim.height()
+            self._glotlib_window.ctx._init_gl(QOpenGLContext.currentContext(),
+                                              ctx_w, ctx_h, fb_w, fb_h)
         except Exception as e:
             self._dump_and_exit(e, -2)
 
