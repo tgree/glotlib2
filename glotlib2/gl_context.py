@@ -1,10 +1,13 @@
 from OpenGL import GL
 
+from .programs import Programs
+
 
 class GLContext:
     def __init__(self, msaa=None):
         self.opengl_context = None
         self.msaa = msaa
+        self.programs = Programs()
 
     def is_active(self):
         '''
@@ -20,6 +23,8 @@ class GLContext:
         '''
         self.opengl_context = opengl_context
         assert self.is_active()
+
+        self.programs.load()
 
         if self.msaa is not None:
             GL.glEnable(GL.GL_MULTISAMPLE)
