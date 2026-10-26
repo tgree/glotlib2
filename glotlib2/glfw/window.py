@@ -37,12 +37,11 @@ class Window:
 
         current_context = glfw.get_current_context()
         assert current_context is not None
-        self.ctx._init_gl(ctypes.cast(current_context, ctypes.c_void_p).value)
-
         ctx_w, ctx_h = glfw.get_window_size(self.glfw_window)
-        self.ctx._resize_gl_ctx(ctx_w, ctx_h)
-
         fb_w, fb_h = glfw.get_framebuffer_size(self.glfw_window)
+        self.ctx._init_gl(ctypes.cast(current_context, ctypes.c_void_p).value,
+                          ctx_w, ctx_h, fb_w, fb_h)
+        self.ctx._resize_gl_ctx(ctx_w, ctx_h)
         self.ctx._resize_gl_fb(fb_w, fb_h)
 
         _register_window(self)
