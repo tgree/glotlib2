@@ -1,6 +1,7 @@
 from OpenGL import GL
 
 from .programs import Programs
+from .faces import Faces
 
 
 class GLContext:
@@ -8,6 +9,7 @@ class GLContext:
         self.opengl_context = None
         self.msaa = msaa
         self.programs = Programs()
+        self.faces = Faces()
 
     def is_active(self):
         '''
