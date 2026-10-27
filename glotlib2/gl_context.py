@@ -1,15 +1,27 @@
-import threading
-
 from OpenGL import GL
 
+from .gl_object import GLParent
 from .programs import Programs
 from .faces import Faces
 from .label import FlexLabel
 from . import matrix
 
 
-class GLContext:
+class GLObjectMeta(type):
+    '''
+    Metaclass that causes the object to automatically be registered for deferred
+    _init_gl() calling by the GLContext.
+    '''
+    def __call__(cls, *args, **kwargs):
+        obj = super().__call__(*args, **kwargs)
+        obj.ctx._register_new_gl_object(obj)
+        return obj
+
+
+class GLContext(GLParent):
     def __init__(self, msaa=None):
+        super().__init__()
+
         self.opengl_context = None
         self.msaa = msaa
         self.programs = Programs()
@@ -20,10 +32,6 @@ class GLContext:
         self.fb_w  = None
         self.fb_h  = None
         self.mvp   = None
-
-        self.labels_lock = threading.Lock()
-        self.new_labels = []
-        self.labels = []
 
     def is_active(self):
         '''
@@ -37,20 +45,6 @@ class GLContext:
         a redraw will be forced.
         '''
         raise NotImplementedError
-
-    def _init_new_labels(self):
-        '''
-        Pops all labels from the new_labels list, inits them and then adds them
-        to the regular labels list.
-        '''
-        if self.new_labels:
-            with self.labels_lock:
-                new_labels = self.new_labels
-                self.new_labels = []
-
-            for l in new_labels:
-                l._init_gl()
-                self.labels.append(l)
 
     def _init_gl(self, opengl_context, ctx_w, ctx_h, fb_w, fb_h):
         '''
@@ -82,8 +76,8 @@ class GLContext:
         # print('Context Resize: %u x %u' % (w, h))
         self.ctx_w, self.ctx_h = w, h
         self.mvp = matrix.ortho(0, self.ctx_w, 0, self.ctx_h, -1, 1)
-        for l in self.labels:
-            l._handle_resize()
+        for obj in self.gl_objects:
+            obj._handle_resize()
 
     def _resize_gl_fb(self, w, h):
         '''
@@ -103,18 +97,14 @@ class GLContext:
         repaint the window since everything should be considered invalidated.
         '''
         assert self.is_active()
-        self._init_new_labels()
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        self._init_new_gl_objects()
 
-        for l in self.labels:
-            if l.visible:
-                l.draw(self.mvp)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        for obj in self.gl_objects:
+            if obj.visible:
+                obj.draw()
 
     def add_label(self, *args, face=None, font_size=12, **kwargs):
         face = face or self.faces.vera
-        return FlexLabel(self, *args, face=face, font_size=font_size, **kwargs)
-
-    def _register_new_label(self, label):
-        with self.labels_lock:
-            self.new_labels.append(label)
-        self.mark_dirty()
+        return FlexLabel(self, self, *args, face=face, font_size=font_size,
+                         **kwargs)
