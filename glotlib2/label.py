@@ -3,6 +3,7 @@ from enum import IntEnum
 
 from OpenGL import GL
 
+from .gl_object import GLObject
 from . import matrix
 
 
@@ -31,19 +32,14 @@ ALIGNMENTS = {
 }
 
 
-class LabelMeta(type):
-    def __call__(cls, *args, **kwargs):
-        label = super().__call__(*args, **kwargs)
-        label.ctx._register_new_label(label)
-        return label
-
-
-class Label(metaclass=LabelMeta):
-    def __init__(self, ctx, pos, text, face=None, font_size=None,
+class Label(GLObject):
+    def __init__(self, ctx, gl_parent, pos, text, face=None, font_size=None,
                  font_oversample_log2=0, theta=0, anchor='SW',
                  color=(0, 0, 0, 1), visible=True):
         assert face
         assert font_size
+
+        super().__init__(gl_parent)
 
         self.ctx                  = ctx
         self.font                 = None
@@ -171,8 +167,8 @@ class Label(metaclass=LabelMeta):
 
 
 class FlexLabel(Label):
-    def __init__(self, ctx, pos, *args, **kwargs):
-        super().__init__(ctx, (0, 0), *args, **kwargs)
+    def __init__(self, ctx, gl_parent, pos, *args, **kwargs):
+        super().__init__(ctx, gl_parent, (0, 0), *args, **kwargs)
         self.flex_pos = pos
 
     def _init_gl(self):
