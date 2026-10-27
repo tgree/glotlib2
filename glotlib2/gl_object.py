@@ -20,6 +20,9 @@ class GLObject(metaclass=GLObjectMeta):
         self.new_gl_children  = []
         self.gl_children      = []
 
+        if gl_parent:
+            self.ctx = getattr(gl_parent, 'ctx', gl_parent)
+
     def _init_gl(self):
         pass
 

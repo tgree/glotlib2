@@ -68,14 +68,13 @@ class Plot(GLObject):
         constants.ASPECT_SQUARE : SquareAspect,
     }
 
-    def __init__(self, ctx, gl_parent, bounds=(0, 0, 1, 1), limits=None,
+    def __init__(self, gl_parent, bounds=(0, 0, 1, 1), limits=None,
                  _colors=None, max_h_ticks=MAX_H_TICKS, max_v_ticks=MAX_V_TICKS,
                  aspect=constants.ASPECT_NONE, sharex=None, sharey=None,
                  visible=True, label_face=None, label_font_size=12,
                  border_width=1):
         super().__init__(gl_parent)
 
-        self.ctx             = ctx
         self.bounds          = bounds
         self.limits          = limits
         self.color_iter      = (colors.cycle(_colors)
@@ -107,7 +106,7 @@ class Plot(GLObject):
         self.h_ticks         = []
         self.v_ticks         = []
         self.snapped         = False
-        self.label_face      = label_face or ctx.faces.vera
+        self.label_face      = label_face or self.ctx.faces.vera
         self.label_font_size = label_font_size
         self.label_font      = None
 
@@ -115,21 +114,21 @@ class Plot(GLObject):
         self.sharey.add(self)
 
         for _ in range(max_h_ticks):
-            self.h_ticks.append(Label(ctx, self, (0, 0), '',
+            self.h_ticks.append(Label(self, (0, 0), '',
                                       face=self.label_face,
                                       font_size=self.label_font_size,
                                       anchor='N'))
         for _ in range(max_v_ticks):
-            self.v_ticks.append(Label(ctx, self, (0, 0), '',
+            self.v_ticks.append(Label(self, (0, 0), '',
                                       face=self.label_face,
                                       font_size=self.label_font_size,
                                       anchor='E'))
 
-        self.x_label = Label(ctx, self, (0, 0), '', face=self.label_face,
+        self.x_label = Label(self, (0, 0), '', face=self.label_face,
                              font_size=self.label_font_size, anchor='N',
                              visible=False)
         self.x_label_side = 'bottom'
-        self.y_label = Label(ctx, self, (0, 0), '', face=self.label_face,
+        self.y_label = Label(self, (0, 0), '', face=self.label_face,
                              font_size=self.label_font_size, anchor='S',
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
@@ -386,11 +385,11 @@ class Plot(GLObject):
 
     def show(self):
         self.visible = True
-        self.ctx.mark_dirty()
+        self.mark_dirty()
 
     def hide(self):
         self.visible = False
-        self.ctx.mark_dirty()
+        self.mark_dirty()
 
     def set_bounds(self, bounds, **kwargs):
         self.ctx.set_plot_bounds(self, bounds, **kwargs)

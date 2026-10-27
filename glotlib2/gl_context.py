@@ -171,8 +171,7 @@ class GLContext(GLObject):
 
     def add_label(self, *args, face=None, font_size=12, **kwargs):
         face = face or self.faces.vera
-        return FlexLabel(self, self, *args, face=face, font_size=font_size,
-                         **kwargs)
+        return FlexLabel(self, *args, face=face, font_size=font_size, **kwargs)
 
     def add_plot(self, bounds=111, **kwargs):
         '''
@@ -212,4 +211,4 @@ class GLContext(GLObject):
         edges so that squares in the data space are rendered as squares in the
         screen space.
         '''
-        return Plot(self, self, bounds=_bounds(bounds), **kwargs)
+        return Plot(self, bounds=_bounds(bounds), **kwargs)

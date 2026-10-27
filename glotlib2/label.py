@@ -33,7 +33,7 @@ ALIGNMENTS = {
 
 
 class Label(GLObject):
-    def __init__(self, ctx, gl_parent, pos, text, face=None, font_size=None,
+    def __init__(self, gl_parent, pos, text, face=None, font_size=None,
                  font_oversample_log2=0, theta=0, anchor='SW',
                  color=(0, 0, 0, 1), visible=True):
         assert face
@@ -41,7 +41,6 @@ class Label(GLObject):
 
         super().__init__(gl_parent)
 
-        self.ctx                  = ctx
         self.font                 = None
         self.face                 = face
         self.font_size            = font_size
@@ -156,8 +155,8 @@ class Label(GLObject):
 
 
 class FlexLabel(Label):
-    def __init__(self, ctx, gl_parent, pos, *args, **kwargs):
-        super().__init__(ctx, gl_parent, (0, 0), *args, **kwargs)
+    def __init__(self, gl_parent, pos, *args, **kwargs):
+        super().__init__(gl_parent, (0, 0), *args, **kwargs)
         self.flex_pos = pos
 
     def _init_gl(self):
