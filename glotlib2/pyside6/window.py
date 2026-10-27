@@ -11,11 +11,11 @@ class Window:
         self.qt_window.resize(w, h)
         self.qt_window.move(x, y)
 
-        self.ctx = GLContext(msaa=msaa)
-
         layout = QHBoxLayout(self.qt_window)
         self.gl_widget = GLWidget(self, msaa, parent=self.qt_window)
         layout.addWidget(self.gl_widget)
+
+        self.ctx = GLContext(self.gl_widget, msaa=msaa)
 
     def show(self):
         self.qt_window.show()

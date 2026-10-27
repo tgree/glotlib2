@@ -134,17 +134,6 @@ class Label(GLObject):
         self.theta = theta
         self._update_mvp()
 
-    def draw_batched(self):
-        if self.new_text != self.text:
-            self._gen_text_vertices(self.new_text)
-        if not self.nvertices or not self.visible:
-            return
-
-        mvp = self.ctx.mvp @ self.mvp
-        self.ctx.programs.text.uniformMatrix4fv('u_mvp', mvp)
-        GL.glBindVertexArray(self.vao)
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.nvertices)
-
     def set_text(self, text):
         self._set_text(text)
         self.ctx.mark_dirty()

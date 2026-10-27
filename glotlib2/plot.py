@@ -134,12 +134,15 @@ class Plot(GLObject):
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
 
+        self.new_x_label = (None, None)
+        self.new_y_label = (None, None)
+
     def _init_gl(self):
         self.label_font = self.label_face(self.label_font_size)
 
-        l, b, r, t = self.limits if self.limits else (-1, -1, 1, 1)
-
         self._gen_bounds()
+
+        l, b, r, t = self.limits if self.limits else (-1, -1, 1, 1)
         l, r, b, t = self._adjust_lrbt(l, r, b, t)
         self._renormalize(l, r, b, t)
         self._gen_ticks()
@@ -355,7 +358,7 @@ class Plot(GLObject):
         self._gen_mvp_from_limits(l, r, b, t)
         self._gen_ticks()
 
-    def set_x_label(self, t, side='bottom'):
+    def _set_x_label(self, t, side='bottom'):
         self.x_label.set_text(t)
         if t != '':
             self.x_label.show()
@@ -363,9 +366,12 @@ class Plot(GLObject):
             self.x_label.hide()
         self.x_label_side = side
         self._gen_labels()
-        self.ctx.mark_dirty()
 
-    def set_y_label(self, t, side='left'):
+    def set_x_label(self, t, side='bottom'):
+        self.new_x_label = (t, side)
+        self.mark_dirty()
+
+    def _set_y_label(self, t, side='left'):
         self.y_label.set_text(t)
         if t != '':
             self.y_label.show()
@@ -373,7 +379,10 @@ class Plot(GLObject):
             self.y_label.hide()
         self.y_label_side = side
         self._gen_labels()
-        self.ctx.mark_dirty()
+
+    def set_y_label(self, t, side='left'):
+        self.new_y_label = (t, side)
+        self.mark_dirty
 
     def show(self):
         self.visible = True
@@ -386,7 +395,7 @@ class Plot(GLObject):
     def set_bounds(self, bounds, **kwargs):
         self.ctx.set_plot_bounds(self, bounds, **kwargs)
 
-    def draw(self, t):
+    def _paint_gl(self):
         GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)
         # self.border_lines.bind(0)
         # self.border_lines.use_program(self.border_width, 0, self.ctx.mvp,
@@ -394,21 +403,14 @@ class Plot(GLObject):
         #                               (self.ctx.ctx_w, self.ctx.ctx_h))
         # self.border_lines.draw()
 
-        self.label_font.bind(0)
-        self.ctx.programs.text.useProgram()
-        self.ctx.programs.text.uniform1f('u_z', 0)
-        self.ctx.programs.text.uniform4f('u_color', 0, 0, 0, 1)
-        self.ctx.programs.text.uniform1i('u_sampler', 0)
-        GL.glEnable(GL.GL_BLEND)
-        for h_t in self.h_ticks:
-            h_t.draw_batched(self.ctx.mvp)
-        for v_t in self.v_ticks:
-            v_t.draw_batched(self.ctx.mvp)
-        self.x_label.draw_batched(self.ctx.mvp)
-        self.y_label.draw_batched(self.ctx.mvp)
-        GL.glDisable(GL.GL_BLEND)
+        if self.new_x_label != (self.x_label.text, self.x_label_side):
+            self._set_x_label(*self.new_x_label)
+        if self.new_y_label != (self.y_label.text, self.y_label_side):
+            self._set_y_label(*self.new_y_label)
 
         GL.glViewport(self.fb_x, self.fb_y, self.fb_w, self.fb_h)
         for ga in self.graph_artists:
             # TODO: I feel like this is where self.mvp32 goes.
             ga.draw(t, 0, self.mvp, (self.w, self.h))
+
+        GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)
