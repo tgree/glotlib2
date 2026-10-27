@@ -79,7 +79,7 @@ class GLContext:
         size.  The values are dimensions in window manager context coordinates.
         '''
         assert self.is_active()
-        print('Context Resize: %u x %u' % (w, h))
+        # print('Context Resize: %u x %u' % (w, h))
         self.ctx_w, self.ctx_h = w, h
         self.mvp = matrix.ortho(0, self.ctx_w, 0, self.ctx_h, -1, 1)
         for l in self.labels:
@@ -93,7 +93,7 @@ class GLContext:
         pixels in each dimension compares to the window manager coordinates.
         '''
         assert self.is_active()
-        print('Framebuffer Resize: %u x %u' % (w, h))
+        # print('Framebuffer Resize: %u x %u' % (w, h))
         self.fb_w, self.fb_h = w, h
 
     def _paint_gl(self):
