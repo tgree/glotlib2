@@ -8,7 +8,7 @@ from . import matrix
 from . import constants
 from . import ticker
 from . import colors
-from .gl_object import GLParent
+from .gl_object import GLObject
 from .label import Label
 
 
@@ -62,7 +62,7 @@ class SquareAspect:
         return (wh[1] * ctx_aspect, wh[1])
 
 
-class Plot(GLParent):
+class Plot(GLObject):
     ASPECT_MAP = {
         constants.ASPECT_NONE   : NoAspect,
         constants.ASPECT_SQUARE : SquareAspect,
@@ -75,10 +75,9 @@ class Plot(GLParent):
                  border_width=1):
         super().__init__(gl_parent)
 
-        l, b, r, t = limits if limits else (-1, -1, 1, 1)
-
         self.ctx             = ctx
         self.bounds          = bounds
+        self.limits          = limits
         self.color_iter      = (colors.cycle(_colors)
                                 if _colors else colors.cycle(colors.tab10))
         self.max_h_ticks     = max_h_ticks
@@ -126,14 +125,19 @@ class Plot(GLParent):
                                       font_size=self.label_font_size,
                                       anchor='E'))
 
-        self.x_label = Label(ctx, (0, 0), '', face=self.label_face,
+        self.x_label = Label(ctx, self, (0, 0), '', face=self.label_face,
                              font_size=self.label_font_size, anchor='N',
                              visible=False)
         self.x_label_side = 'bottom'
-        self.y_label = Label(ctx, (0, 0), '', face=self.label_face,
+        self.y_label = Label(ctx, self, (0, 0), '', face=self.label_face,
                              font_size=self.label_font_size, anchor='S',
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
+
+    def _init_gl(self):
+        self.label_font = self.label_face(self.label_font_size)
+
+        l, b, r, t = self.limits if self.limits else (-1, -1, 1, 1)
 
         self._gen_bounds()
         l, r, b, t = self._adjust_lrbt(l, r, b, t)
@@ -176,7 +180,7 @@ class Plot(GLParent):
         t    = yc + h / 2
         return l, r, b, t
 
-    def _handle_resize(self):
+    def _resize_gl_ctx(self, w, h):
         p_w    = self.w
         p_h    = self.h
         xc, yc = self._context_to_data(self.x + self.w / 2, self.y + self.h / 2)

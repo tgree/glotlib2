@@ -4,7 +4,7 @@ from .gl_object import GLObject
 from .programs import Programs
 from .faces import Faces
 from .label import FlexLabel
-# from .plot import Plot
+from .plot import Plot
 from . import matrix
 
 
@@ -135,7 +135,7 @@ class GLContext(GLObject):
         if self.msaa is not None:
             GL.glEnable(GL.GL_MULTISAMPLE)
 
-        GL.glClearColor(1.0, 0.0, 0.0, 1.0)
+        GL.glClearColor(1, 1, 1, 1)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
     def _resize_gl_ctx(self, w, h):
@@ -174,42 +174,42 @@ class GLContext(GLObject):
         return FlexLabel(self, self, *args, face=face, font_size=font_size,
                          **kwargs)
 
-# def add_plot(self, bounds=111, **kwargs):
-#     '''
-#     Adds a rectangular plot to the window.  The bounds value selects the
-#     position of the plot and can have one of the following formats:
+    def add_plot(self, bounds=111, **kwargs):
+        '''
+        Adds a rectangular plot to the window.  The bounds value selects the
+        position of the plot and can have one of the following formats:
 
-#         HWP - a set of 3 integers encoded either as a 3-digit decimal
-#               number with H, W, P in the hundreds, tens and ones positions,
-#               respectively, or as a 3-tuple (H, W, P).  H and W divide the
-#               window space into a grid of height H and width W and P
-#               selects the grid cell numbered from 1 to H*W left-to-right
-#               and then top-to-bottom.
+            HWP - a set of 3 integers encoded either as a 3-digit decimal
+                  number with H, W, P in the hundreds, tens and ones positions,
+                  respectively, or as a 3-tuple (H, W, P).  H and W divide the
+                  window space into a grid of height H and width W and P
+                  selects the grid cell numbered from 1 to H*W left-to-right
+                  and then top-to-bottom.
 
-#         HWR - a 3-tuple (H, W, (r0, r1)) where the H and W values are the
-#               same as HWP format but the plot rectangle will have the
-#               bounds of the smallest rectangle that fully encloses both the
-#               grid cells at positions r0 and r1.
+            HWR - a 3-tuple (H, W, (r0, r1)) where the H and W values are the
+                  same as HWP format but the plot rectangle will have the
+                  bounds of the smallest rectangle that fully encloses both the
+                  grid cells at positions r0 and r1.
 
-#         (x0, y0, x1, y1) - a 4-tuple specifying the bottom-left and top-
-#               right positions of the bounding rectangle, expressed as a
-#               fraction from 0 to 1 which scaled with the dimensions of the
-#               enclosing window.
+            (x0, y0, x1, y1) - a 4-tuple specifying the bottom-left and top-
+                  right positions of the bounding rectangle, expressed as a
+                  fraction from 0 to 1 which scaled with the dimensions of the
+                  enclosing window.
 
-#     The limits 4-tuple can be used to specify the (x0, y0, x1, y1) data
-#     limits that the plot will initially be looking at.
+        The limits 4-tuple can be used to specify the (x0, y0, x1, y1) data
+        limits that the plot will initially be looking at.
 
-#     The colors parameter can specify a list of (R, G, B, A) colors to cycle
-#     through for each new curve added to the plot, as floating-point values
-#     from 0 to 1.
+        The colors parameter can specify a list of (R, G, B, A) colors to cycle
+        through for each new curve added to the plot, as floating-point values
+        from 0 to 1.
 
-#     The max_h_ticks and max_v_ticks parameters can be used to specify the
-#     maximum number of ticks to display on the plot, which can be useful to
-#     limit spam on smaller plots.
+        The max_h_ticks and max_v_ticks parameters can be used to specify the
+        maximum number of ticks to display on the plot, which can be useful to
+        limit spam on smaller plots.
 
-#     The aspect parameter can be either Plot.ASPECT_NONE or
-#     Plot.ASPECT_SQUARE, the latter which enforces the plot's data view
-#     edges so that squares in the data space are rendered as squares in the
-#     screen space.
-#     '''
-#     return Plot(self, bounds=_bounds(bounds), **kwargs)
+        The aspect parameter can be either Plot.ASPECT_NONE or
+        Plot.ASPECT_SQUARE, the latter which enforces the plot's data view
+        edges so that squares in the data space are rendered as squares in the
+        screen space.
+        '''
+        return Plot(self, self, bounds=_bounds(bounds), **kwargs)
