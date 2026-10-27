@@ -39,10 +39,10 @@ class Window:
         assert current_context is not None
         ctx_w, ctx_h = glfw.get_window_size(self.glfw_window)
         fb_w, fb_h = glfw.get_framebuffer_size(self.glfw_window)
-        self.ctx._init_gl(ctypes.cast(current_context, ctypes.c_void_p).value,
-                          ctx_w, ctx_h, fb_w, fb_h)
-        self.ctx._resize_gl_ctx(ctx_w, ctx_h)
-        self.ctx._resize_gl_fb(fb_w, fb_h)
+        self.ctx._init_ctx(ctypes.cast(current_context, ctypes.c_void_p).value,
+                           ctx_w, ctx_h, fb_w, fb_h)
+        self.ctx._tree_resize_gl_ctx(ctx_w, ctx_h)
+        self.ctx._tree_resize_gl_fb(fb_w, fb_h)
 
         _register_window(self)
 
@@ -57,11 +57,11 @@ class Window:
 
     def _handle_window_size_changed(self, _window, w, h):
         if not self._iconified:
-            self.ctx._resize_gl_ctx(w, h)
+            self.ctx._tree_resize_gl_ctx(w, h)
 
     def _handle_framebuffer_size_changed(self, _window, w, h):
         if not self._iconified:
-            self.ctx._resize_gl_fb(w, h)
+            self.ctx._tree_resize_gl_fb(w, h)
 
     def _handle_window_iconified(self, _window, iconified):
         self._iconified = iconified
@@ -72,5 +72,5 @@ class Window:
         redrawn, for instance due to a window resize event.  We must always
         repaint the window since everything should be considered invalidated.
         '''
-        self.ctx._paint_gl()
+        self.ctx._tree_paint_gl()
         self._swap_buffers()

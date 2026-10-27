@@ -80,6 +80,20 @@ class Label(GLObject):
 
         self._gen_text_vertices(self.new_text)
 
+    def _paint_gl(self):
+        if self.new_text != self.text:
+            self._gen_text_vertices(self.new_text)
+        if not self.nvertices:
+            return
+
+        mvp = self.ctx.mvp @ self.mvp
+        GL.glBindVertexArray(self.vao)
+        self.font.bind(0)
+        self.ctx.programs.text.use(0, mvp, self.font, color=self.color)
+        GL.glEnable(GL.GL_BLEND)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.nvertices)
+        GL.glDisable(GL.GL_BLEND)
+
     def _update_mvp(self):
         dx = round(self.width * self.halign / 2)
         dy = round(self.height * self.valign / 2)
@@ -119,20 +133,6 @@ class Label(GLObject):
     def _set_theta(self, theta):
         self.theta = theta
         self._update_mvp()
-
-    def draw(self):
-        if self.new_text != self.text:
-            self._gen_text_vertices(self.new_text)
-        if not self.nvertices:
-            return
-
-        mvp = self.ctx.mvp @ self.mvp
-        GL.glBindVertexArray(self.vao)
-        self.font.bind(0)
-        self.ctx.programs.text.use(0, mvp, self.font, color=self.color)
-        GL.glEnable(GL.GL_BLEND)
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.nvertices)
-        GL.glDisable(GL.GL_BLEND)
 
     def draw_batched(self):
         if self.new_text != self.text:
@@ -176,7 +176,7 @@ class FlexLabel(Label):
                     int(self.flex_pos[1] * self.ctx.ctx_h))
         super()._init_gl()
 
-    def _handle_resize(self):
+    def _resize_gl_ctx(self, w, h):
         self._set_flex_pos(self.flex_pos)
 
     def _set_flex_pos(self, pos):

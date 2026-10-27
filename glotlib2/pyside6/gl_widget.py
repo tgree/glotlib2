@@ -30,8 +30,8 @@ class GLWidget(QOpenGLWidget):
             ctx_w, ctx_h = self.width(), self.height()
             surface_dim = self.context().surface().size()
             fb_w, fb_h = surface_dim.width(), surface_dim.height()
-            self._glotlib_window.ctx._init_gl(QOpenGLContext.currentContext(),
-                                              ctx_w, ctx_h, fb_w, fb_h)
+            self._glotlib_window.ctx._init_ctx(QOpenGLContext.currentContext(),
+                                               ctx_w, ctx_h, fb_w, fb_h)
         except Exception as e:
             self._dump_and_exit(e, -2)
 
@@ -40,13 +40,13 @@ class GLWidget(QOpenGLWidget):
             ctx_size = (w, h)
             if ctx_size != self._last_ctx_size:
                 self._last_ctx_size = ctx_size
-                self._glotlib_window.ctx._resize_gl_ctx(w, h)
+                self._glotlib_window.ctx._tree_resize_gl_ctx(w, h)
 
             ratio = self._glotlib_window.qt_window.devicePixelRatio()
             fb_size = (int(w * ratio), int(h * ratio))
             if fb_size != self._last_fb_size:
                 self._last_fb_size = fb_size
-                self._glotlib_window.ctx._resize_gl_fb(*fb_size)
+                self._glotlib_window.ctx._tree_resize_gl_fb(*fb_size)
         except Exception as e:
             self._dump_and_exit(e, -3)
 
@@ -57,6 +57,6 @@ class GLWidget(QOpenGLWidget):
         screen here.
         '''
         try:
-            self._glotlib_window.ctx._paint_gl()
+            self._glotlib_window.ctx._tree_paint_gl()
         except Exception as e:
             self._dump_and_exit(e, -4)
