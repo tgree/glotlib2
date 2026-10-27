@@ -24,8 +24,10 @@ def _register_window(w):
 
 def _draw_windows():
     for w in WINDOWS:
-        w.ctx._paint_gl()
-        w._swap_buffers()
+        if w.ctx._dirty:
+            w.ctx._dirty = False
+            w.ctx._paint_gl()
+            w._swap_buffers()
 
 
 def interact():

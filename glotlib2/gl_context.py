@@ -24,6 +24,13 @@ class GLContext:
         '''
         raise NotImplementedError
 
+    def mark_dirty(self):
+        '''
+        Marks the context as dirty so that the next time through the event loop
+        a redraw will be forced.
+        '''
+        raise NotImplementedError
+
     def _init_gl(self, opengl_context, ctx_w, ctx_h, fb_w, fb_h):
         '''
         Called by the native window manager (or whatever is creating contexts)

@@ -8,3 +8,7 @@ class GLContext(gl_context.GLContext):
         if self.opengl_context is None:
             return False
         return self.opengl_context == QOpenGLContext.currentContext()
+
+    def mark_dirty(self):
+        # TODO: self.update()?
+        pass
