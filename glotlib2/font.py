@@ -85,19 +85,24 @@ class Font:
         self.ascender   = ascender
         self.height     = height
         self.size       = size
-        self.tex        = GL.glGenTextures(1)
+        self.tex        = None
         self.bind_unit  = None
+
+    def _init_gl(self):
+        self.tex = GL.glGenTextures(1)
 
         GL.glBindTexture(GL.GL_TEXTURE_2D, self.tex)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER,
                            GL.GL_NEAREST)
         GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER,
                            GL.GL_NEAREST)
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_R8, tex_data.shape[1],
-                        tex_data.shape[0], 0, GL.GL_RED, GL.GL_UNSIGNED_BYTE,
-                        tex_data)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_R8, self.tex_w, self.tex_h,
+                        0, GL.GL_RED, GL.GL_UNSIGNED_BYTE, self.tex_data)
 
     def bind(self, unit):
+        if self.tex is None:
+            self._init_gl()
+
         GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self.tex)
         self.bind_unit = unit
