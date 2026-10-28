@@ -9,7 +9,7 @@ from .backend import _register_window
 
 
 class Window:
-    def __init__(self, w, h, x=100, y=100, name='', msaa=None):
+    def __init__(self, w, h, x=100, y=100, name='', msaa=None, delegate=None):
         self.glfw_window = glfw.create_window(w, h, name, None, None)
         glfw.set_window_pos(self.glfw_window, x, y)
         glfw.set_window_size_limits(self.glfw_window, 16, 16,
@@ -25,7 +25,7 @@ class Window:
             self.glfw_window, self._handle_window_refresh)
 
         self._iconified = False
-        self.ctx = GLContext(msaa=msaa)
+        self.ctx = GLContext(msaa=msaa, delegate=delegate)
 
         glfw.make_context_current(self.glfw_window)
         profile_mask = GL.glGetIntegerv(GL.GL_CONTEXT_PROFILE_MASK)

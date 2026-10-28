@@ -87,8 +87,19 @@ def _bounds(b, pad_l=PAD_H, pad_r=PAD_H, pad_b=PAD_V, pad_t=PAD_V):
             pad_b + (1 - (pad_b + pad_t))*c[3])
 
 
+class GLContextDelegate:
+    def handle_mouse_moved(self, x, y):
+        pass
+
+    def handle_key_press(self, key):
+        pass
+
+    def update_geometry(self, _t):
+        return False
+
+
 class GLContext(GLObject):
-    def __init__(self, msaa=None):
+    def __init__(self, msaa=None, delegate=None):
         super().__init__(None)
 
         self.opengl_context = None
@@ -101,6 +112,8 @@ class GLContext(GLObject):
         self.fb_w  = None
         self.fb_h  = None
         self.mvp   = None
+
+        self.delegate = delegate or GLContextDelegate()
 
     def is_active(self):
         '''

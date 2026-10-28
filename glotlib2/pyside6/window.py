@@ -6,7 +6,7 @@ from .gl_widget import GLWidget
 
 
 class Window:
-    def __init__(self, w, h, x=100, y=100, name='', msaa=None):
+    def __init__(self, w, h, x=100, y=100, name='', msaa=None, delegate=None):
         self.qt_window = QWidget()
         self.qt_window.setWindowTitle(name)
         self.qt_window.resize(w, h)
@@ -16,7 +16,7 @@ class Window:
         self.gl_widget = GLWidget(self, msaa, parent=self.qt_window)
         layout.addWidget(self.gl_widget)
 
-        self.ctx = GLContext(self.gl_widget, msaa=msaa)
+        self.ctx = GLContext(self.gl_widget, msaa=msaa, delegate=delegate)
 
     def show(self):
         # This line fixes the issue where the window seems to "expand into
