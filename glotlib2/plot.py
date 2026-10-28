@@ -1,4 +1,5 @@
 import math
+import threading
 
 import numpy as np
 from OpenGL import GL
@@ -66,6 +67,29 @@ class SquareAspect:
         return (wh[1] * ctx_aspect, wh[1])
 
 
+class SetXLabelEvent:
+    def __init__(self, text, side):
+        self.text = text
+        self.side = side
+
+    def handle_event(self, plot):
+        plot._set_x_label(self.text, self.side)
+
+
+class SetYLabelEvent:
+    def __init__(self, text, side):
+        self.text = text
+        self.side = side
+
+    def handle_event(self, plot):
+        plot._set_y_label(self.text, self.side)
+
+
+class SnapBoundsEvent:
+    def handle_event(self, plot):
+        plot._snap_bounds()
+
+
 class Plot(GLObject):
     ASPECT_MAP = {
         constants.ASPECT_NONE   : NoAspect,
@@ -109,7 +133,6 @@ class Plot(GLObject):
         self.h_ticks         = []
         self.v_ticks         = []
         self.snapped         = False
-        self.snap_requested  = False
         self.label_font      = label_font or self.ctx.faces.vera(12, 0)
 
         self.sharex.add(self)
@@ -129,8 +152,8 @@ class Plot(GLObject):
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
 
-        self.new_x_label = ('', 'bottom')
-        self.new_y_label = ('', 'left')
+        self._event_queue_lock = threading.Lock()
+        self._event_queue = []
 
     def _init_gl(self):
         self._gen_bounds()
@@ -140,6 +163,11 @@ class Plot(GLObject):
         self._renormalize(l, r, b, t)
         self._gen_ticks()
         self._update_shared_axes()
+
+    def _enqueue_event(self, event):
+        with self._event_queue_lock:
+            self._event_queue.append(event)
+        self.ctx.mark_dirty()
 
     def _get_data_bounds(self):
         l = self.mvpi[0][3] - self.mvpi[0][0]
@@ -445,8 +473,7 @@ class Plot(GLObject):
         self.snapped = True
 
     def snap_bounds(self):
-        self.snap_requested = True
-        self.ctx.mark_dirty()
+        self._enqueue_event(SnapBoundsEvent())
 
     def _set_x_lim(self, l, r):
         _, _, b, t = self._get_data_bounds()
@@ -474,8 +501,7 @@ class Plot(GLObject):
         self._gen_labels()
 
     def set_x_label(self, t, side='bottom'):
-        self.new_x_label = (t, side)
-        self.mark_dirty()
+        self._enqueue_event(SetXLabelEvent(t, side))
 
     def _set_y_label(self, t, side='left'):
         self.y_label.set_text(t)
@@ -487,8 +513,7 @@ class Plot(GLObject):
         self._gen_labels()
 
     def set_y_label(self, t, side='left'):
-        self.new_y_label = (t, side)
-        self.mark_dirty()
+        self._enqueue_event(SetYLabelEvent(t, side))
 
     def show(self):
         self.visible = True
@@ -503,13 +528,12 @@ class Plot(GLObject):
 
     def _paint_gl(self):
         GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)
-        if self.new_x_label != (self.x_label.text, self.x_label_side):
-            self._set_x_label(*self.new_x_label)
-        if self.new_y_label != (self.y_label.text, self.y_label_side):
-            self._set_y_label(*self.new_y_label)
-        if self.snap_requested:
-            self.snap_requested = False
-            self._snap_bounds()
+        if self._event_queue:
+            with self._event_queue_lock:
+                event_queue = self._event_queue
+                self._event_queue = []
+            for e in event_queue:
+                e.handle_event(self)
 
         self.border_lines.bind(0)
         self.border_lines.use_program(self.ctx, self.border_width, 0,
