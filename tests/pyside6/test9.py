@@ -1,5 +1,4 @@
 import sys
-import math
 
 import numpy as np
 from PySide6.QtWidgets import QApplication

@@ -66,10 +66,10 @@ class GLWidget(QOpenGLWidget):
         except Exception as e:
             self._dump_and_exit(e, -4)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, _event):
         self.doneCurrent()
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, _event):
         self.doneCurrent()
 
     def mouseMoveEvent(self, event):
