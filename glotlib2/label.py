@@ -1,5 +1,6 @@
 from ctypes import c_void_p
 from enum import IntEnum
+import threading
 
 from OpenGL import GL
 
@@ -33,38 +34,36 @@ ALIGNMENTS = {
 
 
 class Label(GLObject):
-    def __init__(self, gl_parent, pos, text, face=None, font_size=None,
-                 font_oversample_log2=0, theta=0, anchor='SW',
+    def __init__(self, gl_parent, pos, text, font=None, theta=0, anchor='SW',
                  color=(0, 0, 0, 1), visible=True):
-        assert face
-        assert font_size
+        assert font
 
         super().__init__(gl_parent)
 
-        self.font                 = None
-        self.face                 = face
-        self.font_size            = font_size
-        self.font_oversample_log2 = font_oversample_log2
-        self.pos                  = (int(pos[0]), int(pos[1]))
-        self.theta                = theta
-        self.color                = color
-        self.visible              = visible
-        self.text                 = None
-        self.new_text             = text
-        self.mvp                  = None
-        alignment                 = ALIGNMENTS[anchor]
-        self.halign               = alignment[0]
-        self.valign               = alignment[1]
-        self.width                = 0
-        self.height               = 0
-        self.nvertices            = 0
-        self.vao                  = None
-        self.geom_vbo             = None
-        self.tex_vbo              = None
+        self.font            = font
+        self.pos             = (int(pos[0]), int(pos[1]))
+        self.theta           = theta
+        self.color           = color
+        self.visible         = visible
+        self.text            = text
+        self.mvp             = None
+        alignment            = ALIGNMENTS[anchor]
+        self.halign          = alignment[0]
+        self.valign          = alignment[1]
+        self.width           = 0
+        self.height          = 0
+        self.vertices        = None
+        self.nvertices       = None
+        self.tex_coords      = None
+        self.vao             = None
+        self.geom_vbo        = None
+        self.tex_vbo         = None
+        self._paint_lock     = threading.Lock()
+        self._vertices_dirty = None
+
+        self._gen_vertices(text)
 
     def _init_gl(self):
-        self.font     = self.face(self.font_size,
-                                  oversample_log2=self.font_oversample_log2)
         self.vao      = GL.glGenVertexArrays(1)
         self.geom_vbo = GL.glGenBuffers(1)
         self.tex_vbo  = GL.glGenBuffers(1)
@@ -76,22 +75,23 @@ class Label(GLObject):
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.tex_vbo)
         GL.glVertexAttribPointer(1, 2, GL.GL_FLOAT, GL.GL_FALSE, 0, c_void_p(0))
         GL.glEnableVertexAttribArray(1)
-
-        self._gen_text_vertices(self.new_text)
+        GL.glBindVertexArray(0)
 
     def _paint_gl(self):
-        if self.new_text != self.text:
-            self._gen_text_vertices(self.new_text)
-        if not self.nvertices:
-            return
+        with self._paint_lock:
+            if self._vertices_dirty:
+                self._vertices_dirty = False
+                self._upload_vertices()
+            if self.vertices.size == 0:
+                return
 
-        mvp = self.ctx.mvp @ self.mvp
-        GL.glBindVertexArray(self.vao)
-        self.font.bind(0)
-        self.ctx.programs.text.use(0, mvp, self.font, color=self.color)
-        GL.glEnable(GL.GL_BLEND)
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.nvertices)
-        GL.glDisable(GL.GL_BLEND)
+            mvp = self.ctx.mvp @ self.mvp
+            GL.glBindVertexArray(self.vao)
+            self.font.bind(0)
+            self.ctx.programs.text.use(0, mvp, self.font, color=self.color)
+            GL.glEnable(GL.GL_BLEND)
+            GL.glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices))
+            GL.glDisable(GL.GL_BLEND)
 
     def _update_mvp(self):
         dx = round(self.width * self.halign / 2)
@@ -102,47 +102,42 @@ class Label(GLObject):
             matrix.translate(-dx, -dy)
             )
 
-    def _gen_text_vertices(self, text):
-        if text == self.text:
-            return False
-
+    def _gen_vertices(self, text):
         vertices, tex_coords, width, height = self.font.gen_vertices_left(text)
 
-        self.text      = text
-        self.nvertices = len(vertices)
-        self.width     = width
-        self.height    = height
-        if self.nvertices:
-            GL.glBindVertexArray(self.vao)
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.geom_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, vertices, GL.GL_STATIC_DRAW)
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.tex_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, tex_coords, GL.GL_STATIC_DRAW)
+        with self._paint_lock:
+            self._vertices_dirty = True
+            self.text            = text
+            self.vertices        = vertices
+            self.tex_coords      = tex_coords
+            self.width           = width
+            self.height          = height
+            self._update_mvp()
 
-        self._update_mvp()
+    def _upload_vertices(self):
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.geom_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, self.vertices,
+                        GL.GL_STATIC_DRAW)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.tex_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, self.tex_coords,
+                        GL.GL_STATIC_DRAW)
+
         return True
 
-    def _set_text(self, text):
-        self.new_text = text
-
-    def _set_pos(self, pos):
-        self.pos = (int(pos[0]), int(pos[1]))
-        self._update_mvp()
-
-    def _set_theta(self, theta):
-        self.theta = theta
-        self._update_mvp()
-
     def set_text(self, text):
-        self._set_text(text)
+        self._gen_vertices(text)
         self.ctx.mark_dirty()
 
     def set_pos(self, pos):
-        self._set_pos(pos)
+        with self._paint_lock:
+            self.pos = (int(pos[0]), int(pos[1]))
+            self._update_mvp()
         self.ctx.mark_dirty()
 
     def set_theta(self, theta):
-        self._set_theta(theta)
+        with self._paint_lock:
+            self.theta = theta
+            self._update_mvp()
         self.ctx.mark_dirty()
 
     def show(self):
@@ -160,19 +155,16 @@ class FlexLabel(Label):
         self.flex_pos = pos
 
     def _init_gl(self):
+        super()._init_gl()
         self.pos = (int(self.flex_pos[0] * self.ctx.ctx_w),
                     int(self.flex_pos[1] * self.ctx.ctx_h))
-        super()._init_gl()
+        self._update_mvp()
 
     def _resize_gl_ctx(self, w, h):
-        self._set_flex_pos(self.flex_pos)
-
-    def _set_flex_pos(self, pos):
-        self.flex_pos = pos
-        pos           = (pos[0] * self.ctx.ctx_w,
-                         pos[1] * self.ctx.ctx_h)
-        super()._set_pos(pos)
+        self.set_pos(self.flex_pos)
 
     def set_pos(self, pos):
-        self._set_flex_pos(pos)
-        self.ctx.mark_dirty()
+        self.flex_pos = pos
+        pos = (pos[0] * self.ctx.ctx_w,
+               pos[1] * self.ctx.ctx_h)
+        super().set_pos(pos)

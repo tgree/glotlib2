@@ -3,16 +3,16 @@ import math
 import numpy as np
 from OpenGL import GL
 
-# import glotlib.miter_lines
 from . import matrix
 from . import constants
 from . import ticker
 from . import colors
+# from . import miter_lines
 from .gl_object import GLObject
 from .label import Label
 
 
-PAD_L       = 0.05
+PAD_L       = 0.025
 PAD_B       = 0.025
 MAX_H_TICKS = 10
 MAX_V_TICKS = 7
@@ -71,8 +71,7 @@ class Plot(GLObject):
     def __init__(self, gl_parent, bounds=(0, 0, 1, 1), limits=None,
                  _colors=None, max_h_ticks=MAX_H_TICKS, max_v_ticks=MAX_V_TICKS,
                  aspect=constants.ASPECT_NONE, sharex=None, sharey=None,
-                 visible=True, label_face=None, label_font_size=12,
-                 border_width=1):
+                 visible=True, label_font=None, border_width=1):
         super().__init__(gl_parent)
 
         self.bounds          = bounds
@@ -101,35 +100,27 @@ class Plot(GLObject):
         self.mouse_state     = None
         self.series          = []
         self.graph_artists   = []
-        # self.border_lines   = glotlib.miter_lines.from_points([(0, 0)] * 6)
+        # self.border_lines    = miter_lines.from_points([(0, 0)] * 6)
         self.border_width    = border_width
         self.h_ticks         = []
         self.v_ticks         = []
         self.snapped         = False
-        self.label_face      = label_face or self.ctx.faces.vera
-        self.label_font_size = label_font_size
-        self.label_font      = None
+        self.label_font      = label_font or self.ctx.faces.vera(12, 0)
 
         self.sharex.add(self)
         self.sharey.add(self)
 
         for _ in range(max_h_ticks):
-            self.h_ticks.append(Label(self, (0, 0), '',
-                                      face=self.label_face,
-                                      font_size=self.label_font_size,
+            self.h_ticks.append(Label(self, (0, 0), '', font=self.label_font,
                                       anchor='N'))
         for _ in range(max_v_ticks):
-            self.v_ticks.append(Label(self, (0, 0), '',
-                                      face=self.label_face,
-                                      font_size=self.label_font_size,
+            self.v_ticks.append(Label(self, (0, 0), '', font=self.label_font,
                                       anchor='E'))
 
-        self.x_label = Label(self, (0, 0), '', face=self.label_face,
-                             font_size=self.label_font_size, anchor='N',
+        self.x_label = Label(self, (0, 0), '', font=self.label_font, anchor='N',
                              visible=False)
         self.x_label_side = 'bottom'
-        self.y_label = Label(self, (0, 0), '', face=self.label_face,
-                             font_size=self.label_font_size, anchor='S',
+        self.y_label = Label(self, (0, 0), '', font=self.label_font, anchor='S',
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
 
@@ -137,8 +128,6 @@ class Plot(GLObject):
         self.new_y_label = (None, None)
 
     def _init_gl(self):
-        self.label_font = self.label_face(self.label_font_size)
-
         self._gen_bounds()
 
         l, b, r, t = self.limits if self.limits else (-1, -1, 1, 1)
@@ -257,6 +246,9 @@ class Plot(GLObject):
 
     def _gen_labels(self):
         if self.x_label_side == 'bottom':
+            # The height of the X-axis tick numbers are always the height of
+            # the tick (label) font.
+            # x_ticks_height = self.label_font.ascender
             x_ticks_height = max(h_t.height for h_t in self.h_ticks)
             self.x_label.set_pos((self.x + self.w / 2,
                                   self.y - x_ticks_height - 6))
@@ -264,6 +256,9 @@ class Plot(GLObject):
             self.x_label.set_pos((self.x + self.w / 2, self.y + self.h + 18))
 
         if self.y_label_side == 'left':
+            # The width of the Y-axis tick numbers depends on the number of
+            # digits and sign being displayed, so we need to calculate it
+            # directly.
             y_ticks_width = max(v_t.width for v_t in self.v_ticks)
             self.y_label.set_pos((self.x - y_ticks_width -
                                   (self.label_font.size + 4),
@@ -396,16 +391,18 @@ class Plot(GLObject):
 
     def _paint_gl(self):
         GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)
+        if self.new_x_label != (self.x_label.text, self.x_label_side):
+            self._set_x_label(*self.new_x_label)
+        if self.new_y_label != (self.y_label.text, self.y_label_side):
+            self._set_y_label(*self.new_y_label)
+        return
+
         # self.border_lines.bind(0)
         # self.border_lines.use_program(self.border_width, 0, self.ctx.mvp,
         #                               (0, 0, 0, 1),
         #                               (self.ctx.ctx_w, self.ctx.ctx_h))
         # self.border_lines.draw()
 
-        if self.new_x_label != (self.x_label.text, self.x_label_side):
-            self._set_x_label(*self.new_x_label)
-        if self.new_y_label != (self.y_label.text, self.y_label_side):
-            self._set_y_label(*self.new_y_label)
 
         GL.glViewport(self.fb_x, self.fb_y, self.fb_w, self.fb_h)
         for ga in self.graph_artists:

@@ -169,9 +169,9 @@ class GLContext(GLObject):
 
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
-    def add_label(self, *args, face=None, font_size=12, **kwargs):
-        face = face or self.faces.vera
-        return FlexLabel(self, *args, face=face, font_size=font_size, **kwargs)
+    def add_label(self, *args, font=None, **kwargs):
+        font = font or self.faces.vera(12)
+        return FlexLabel(self, *args, font=font, **kwargs)
 
     def add_plot(self, bounds=111, **kwargs):
         '''
