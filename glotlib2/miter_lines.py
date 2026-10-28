@@ -49,7 +49,10 @@ class MiterLines:
                                     resolution=resolution)
 
     def draw(self):
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6 * (len(self.vertices) - 3))
+        if self.vertices.size == 0:
+            return
+
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6 * (self.vertices.size - 3))
 
     def update_points(self, xy_tuples):
         self._update(vertices_from_points(xy_tuples))
