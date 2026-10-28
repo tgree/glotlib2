@@ -109,6 +109,7 @@ class Plot(GLObject):
         self.h_ticks         = []
         self.v_ticks         = []
         self.snapped         = False
+        self.snap_requested  = False
         self.label_font      = label_font or self.ctx.faces.vera(12, 0)
 
         self.sharex.add(self)
@@ -203,6 +204,10 @@ class Plot(GLObject):
         self._handle_resize()
 
     def _gen_bounds(self):
+        '''
+        Safe to call without an active OpenGL context, however it makes use of
+        ctx and fb dimensions which are not available until after _init_gl().
+        '''
         x = self.x = int((self.bounds[0] + PAD_L) * self.ctx.ctx_w)
         y = self.y = int((self.bounds[1] + PAD_B) * self.ctx.ctx_h)
         w = self.w = (int((self.bounds[2] - self.bounds[0] - PAD_L) *
@@ -412,6 +417,37 @@ class Plot(GLObject):
         self.graph_artists.append(vl)
         return vl
 
+    def _snap_bounds(self):
+        l = b = math.inf
+        r = t = -math.inf
+        for s in self.series:
+            if not s.visible or len(s.vertices) == 0:
+                continue
+
+            sl, sb = np.nanmin(s.vertices, axis=0)
+            sr, st = np.nanmax(s.vertices, axis=0)
+            l = min(l, sl)
+            b = min(b, sb)
+            r = max(r, sr)
+            t = max(t, st)
+        if l == r:
+            l -= 0.5
+            r += 0.5
+        if b == t:
+            b -= 0.5
+            t += 0.5
+        if l < r and b < t:
+            l, r, b, t = self._adjust_lrbt(l, r, b, t, 1.05, 1.05)
+            self._gen_mvp_from_limits(l, r, b, t)
+            self._gen_ticks()
+            self._update_shared_axes()
+
+        self.snapped = True
+
+    def snap_bounds(self):
+        self.snap_requested = True
+        self.ctx.mark_dirty()
+
     def _set_x_lim(self, l, r):
         _, _, b, t = self._get_data_bounds()
         _, h = self.aspect.adjust_vert((r - l, t - b), (self.w, self.h))
@@ -471,6 +507,9 @@ class Plot(GLObject):
             self._set_x_label(*self.new_x_label)
         if self.new_y_label != (self.y_label.text, self.y_label_side):
             self._set_y_label(*self.new_y_label)
+        if self.snap_requested:
+            self.snap_requested = False
+            self._snap_bounds()
 
         self.border_lines.bind(0)
         self.border_lines.use_program(self.ctx, self.border_width, 0,

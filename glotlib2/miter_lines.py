@@ -46,6 +46,9 @@ class MiterLines:
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6 * (nvertices - 3))
 
     def _update(self, vertices):
+        '''
+        Safe to call without an active OpenGL context.
+        '''
         with self._vertices_lock:
             self._vertices_dirty = True
             self.vertices = vertices
