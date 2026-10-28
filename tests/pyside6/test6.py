@@ -27,7 +27,7 @@ class App(glotlib2.GLContextDelegate):
 def main():
     glotlib2.pyside6.init_backend()
     q_app = QApplication(sys.argv)
-    app = App()
+    app = App()  # noqa: F841 # pylint: disable=unused-variable
     q_app.exec()
 
 

@@ -112,6 +112,8 @@ class GLContext(GLObject):
         self.fb_w  = None
         self.fb_h  = None
         self.mvp   = None
+        self.r_w   = None
+        self.r_h   = None
 
         self.plots = []
 
@@ -153,6 +155,10 @@ class GLContext(GLObject):
         GL.glClearColor(1, 1, 1, 1)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
+    def _update_ratios(self):
+        self.r_w = self.fb_w / self.ctx_w if self.ctx_w else 0
+        self.r_h = self.fb_h / self.ctx_h if self.ctx_h else 0
+
     def _resize_gl_ctx(self, w, h):
         '''
         Called by the native window manager when the OpenGL context changes
@@ -162,6 +168,7 @@ class GLContext(GLObject):
         # print('Context Resize: %u x %u' % (w, h))
         self.ctx_w, self.ctx_h = w, h
         self.mvp = matrix.ortho(0, self.ctx_w, 0, self.ctx_h, -1, 1)
+        self._update_ratios()
 
     def _resize_gl_fb(self, w, h):
         '''
@@ -173,6 +180,7 @@ class GLContext(GLObject):
         assert self.is_active()
         # print('Framebuffer Resize: %u x %u' % (w, h))
         self.fb_w, self.fb_h = w, h
+        self._update_ratios()
 
     def _handle_mouse_moved(self, x, y):
         plot = self.find_plot(x, y)

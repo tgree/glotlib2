@@ -20,7 +20,7 @@ class App(glotlib2.GLContextDelegate):
 
 def main():
     glotlib2.glfw.init_backend()
-    app = App()
+    app = App()  # noqa: F841 # pylint: disable=unused-variable
     glotlib2.glfw.interact()
 
 

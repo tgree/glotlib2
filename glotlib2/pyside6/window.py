@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout
-from PySide6.QtCore import QCoreApplication
+# from PySide6.QtCore import QCoreApplication
 
 from .gl_context import GLContext
 from .gl_widget import GLWidget

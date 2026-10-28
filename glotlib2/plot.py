@@ -12,6 +12,8 @@ from .gl_object import GLObject
 from .label import Label
 from .hline import HLine
 from .vline import VLine
+from .series import Series
+from .step_series import StepSeries
 
 
 PAD_L       = 0.025
@@ -348,6 +350,45 @@ class Plot(GLObject):
         y = (y + 1) * self.h / 2 + self.y
         x = (x + 1) * self.w / 2 + self.x
         return x, y
+
+    def _add_series(self, cls, points=None, X=None, Y=None, color=None,
+                    **kwargs):
+        color = colors.make(color, self.color_iter)
+
+        if points is not None:
+            vs = np.array(points, dtype=np.float64)
+        else:
+            vs = np.column_stack((X, Y)).astype(np.float64, copy=False)
+
+        s = cls(self, vs, color=color, **kwargs)
+        self.series.append(s)
+        self.graph_artists.append(s)
+        return s
+
+    def add_lines(self, points=None, **kwargs):
+        '''
+        Adds a set of Lines joining all the specified points.  The points can
+        be encoded in a list of (x, y) tuples using the points keyword argument,
+        or they can be encoded as separate lists of X and Y coordinates using
+        the X and Y keyword arguments.
+        '''
+        return self._add_series(Series, points=points, **kwargs)
+
+    def add_points(self, points=None, width=1, **kwargs):
+        '''
+        Adds a set of Points at the specified points.  The points can be
+        encoded in a list of (x, y) tuples using the points keyword argument,
+        or they can be encoded as separate lists of X and Y coordinates using
+        the X and Y keyword arguments.
+        '''
+        return self._add_series(Series, points=points, width=None,
+                                point_width=width, **kwargs)
+
+    def add_steps(self, points=None, **kwargs):
+        '''
+        Adds a set of steps between the specified points.
+        '''
+        return self._add_series(StepSeries, points=points, **kwargs)
 
     def add_hline(self, y, color=None, **kwargs):
         '''
