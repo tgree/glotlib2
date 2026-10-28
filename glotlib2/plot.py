@@ -226,6 +226,10 @@ class Plot(GLObject):
         self.fb_h  = round(h * self.ctx.fb_h / self.ctx.ctx_h)
 
     def _renormalize(self, l, r, b, t):
+        '''
+        Renormalizes the data but does not update any GL state.  Callable
+        without an active OpenGL context.
+        '''
         self.rmatrix  = matrix.ortho(l, r, b, t, -1, 1, dtype=np.float64)
         self.rmatrixi = matrix.unortho(l, r, b, t, -1, 1, dtype=np.float64)
         self.mvp      = matrix.ortho(-1, 1, -1, 1, -1, 1, dtype=np.float64)

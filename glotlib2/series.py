@@ -93,6 +93,9 @@ class Series:
 
         This performs the normalization math in float64 format and then
         converts it down to float32 when assigning to the VBO.
+
+        This does not directly update the GL state and is callable without an
+        active OpenGL context.
         '''
         if len(self.vertices) == 0:
             return
