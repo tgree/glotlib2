@@ -67,13 +67,17 @@ class GLWidget(QOpenGLWidget):
             self._dump_and_exit(e, -4)
 
     def mousePressEvent(self, _event):
+        # Unbind any stale context for debug purposes.
         self.doneCurrent()
 
     def mouseReleaseEvent(self, _event):
+        # Unbind any stale context for debug purposes.
         self.doneCurrent()
 
     def mouseMoveEvent(self, event):
+        # Unbind any stale context for debug purposes.
         self.doneCurrent()
+
         pos = event.position()
         y = self._glotlib_window.ctx.ctx_h - pos.y()
         self._glotlib_window.ctx._handle_mouse_moved(pos.x(), y)
