@@ -88,7 +88,7 @@ def _bounds(b, pad_l=PAD_H, pad_r=PAD_H, pad_b=PAD_V, pad_t=PAD_V):
 
 
 class GLContextDelegate:
-    def handle_mouse_moved(self, x, y):
+    def handle_mouse_moved(self, plot, x, y):
         pass
 
     def handle_key_press(self, key):
@@ -112,6 +112,8 @@ class GLContext(GLObject):
         self.fb_w  = None
         self.fb_h  = None
         self.mvp   = None
+
+        self.plots = []
 
         self.delegate = delegate or GLContextDelegate()
 
@@ -173,7 +175,8 @@ class GLContext(GLObject):
         self.fb_w, self.fb_h = w, h
 
     def _handle_mouse_moved(self, x, y):
-        self.delegate.handle_mouse_moved(x, y)
+        plot = self.find_plot(x, y)
+        self.delegate.handle_mouse_moved(plot, x, y)
 
     def _paint_gl(self):
         '''
@@ -227,4 +230,12 @@ class GLContext(GLObject):
         edges so that squares in the data space are rendered as squares in the
         screen space.
         '''
-        return Plot(self, bounds=_bounds(bounds), **kwargs)
+        p = Plot(self, bounds=_bounds(bounds), **kwargs)
+        self.plots.append(p)
+        return p
+
+    def find_plot(self, x, y):
+        for p in self.plots:
+            if p.visible and p.x <= x < p.x + p.w and p.y <= y < p.y + p.h:
+                return p
+        return None
