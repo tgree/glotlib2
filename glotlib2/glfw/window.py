@@ -23,6 +23,8 @@ class Window:
             self.glfw_window, self._handle_window_iconified)
         glfw.set_window_refresh_callback(
             self.glfw_window, self._handle_window_refresh)
+        glfw.set_cursor_pos_callback(
+            self.glfw_window, self._handle_mouse_moved)
 
         self._iconified = False
         self.ctx = GLContext(msaa=msaa, delegate=delegate)
@@ -76,3 +78,7 @@ class Window:
         '''
         self.ctx._tree_paint_gl()
         self._swap_buffers()
+
+    def _handle_mouse_moved(self, _window, x, y):
+        y = self.ctx.ctx_h - y
+        self.ctx._handle_mouse_moved(x, y)

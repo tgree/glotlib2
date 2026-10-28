@@ -16,6 +16,7 @@ class GLWidget(QOpenGLWidget):
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
         self.setMinimumSize(16, 16)
+        self.setMouseTracking(True)
 
     def _validate_gl_profile(self):
         if (self.context().format().profile() !=
@@ -64,3 +65,14 @@ class GLWidget(QOpenGLWidget):
             self._glotlib_window.ctx._tree_paint_gl()
         except Exception as e:
             self._dump_and_exit(e, -4)
+
+    def mousePressEvent(self, event):
+        pass
+
+    def mouseReleaseEvent(self, event):
+        pass
+
+    def mouseMoveEvent(self, event):
+        pos = event.position()
+        y = self._glotlib_window.ctx.ctx_h - pos.y()
+        self._glotlib_window.ctx._handle_mouse_moved(pos.x(), y)

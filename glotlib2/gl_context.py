@@ -172,6 +172,9 @@ class GLContext(GLObject):
         # print('Framebuffer Resize: %u x %u' % (w, h))
         self.fb_w, self.fb_h = w, h
 
+    def _handle_mouse_moved(self, x, y):
+        self.delegate.handle_mouse_moved(x, y)
+
     def _paint_gl(self):
         '''
         This is called when the OS has decided that the window needs to be
