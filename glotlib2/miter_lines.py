@@ -15,23 +15,22 @@ class MiterLines:
         self._vertices_lock  = threading.Lock()
         self._vertices_dirty = True
 
-    def _init_gl(self):
-        self.vao     = GL.glGenVertexArrays(1)
-        self.buffer  = GL.glGenBuffers(1)
-        self.texture = GL.glGenTextures(1)
-
-    def _upload_vertices(self):
-        GL.glBindBuffer(GL.GL_TEXTURE_BUFFER, self.buffer)
-        GL.glBufferData(GL.GL_TEXTURE_BUFFER, self.vertices, GL.GL_DYNAMIC_DRAW)
+    def use_program(self, ctx, width, z, mvp, color, resolution):
+        ctx.programs.miter_line.use(width, z, self, mvp, color=color,
+                                    resolution=resolution)
 
     def bind(self, unit):
         if self.vao is None:
-            self._init_gl()
+            self.vao = GL.glGenVertexArrays(1)
+            self.buffer = GL.glGenBuffers(1)
+            self.texture = GL.glGenTextures(1)
 
         with self._vertices_lock:
             if self._vertices_dirty:
                 self._vertices_dirty = False
-                self._upload_vertices()
+                GL.glBindBuffer(GL.GL_TEXTURE_BUFFER, self.buffer)
+                GL.glBufferData(GL.GL_TEXTURE_BUFFER, self.vertices,
+                                GL.GL_DYNAMIC_DRAW)
 
         GL.glBindVertexArray(self.vao)
         GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
@@ -39,20 +38,17 @@ class MiterLines:
         GL.glTexBuffer(GL.GL_TEXTURE_BUFFER, GL.GL_RG32F, self.buffer)
         self.bind_unit = unit
 
+    def draw(self):
+        nvertices = len(self.vertices)
+        if not nvertices:
+            return
+
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6 * (nvertices - 3))
+
     def _update(self, vertices):
         with self._vertices_lock:
             self._vertices_dirty = True
             self.vertices = vertices
-
-    def use_program(self, ctx, width, z, mvp, color, resolution):
-        ctx.programs.miter_line.use(width, z, self, mvp, color=color,
-                                    resolution=resolution)
-
-    def draw(self):
-        if self.vertices.size == 0:
-            return
-
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 6 * (self.vertices.size - 3))
 
     def update_points(self, xy_tuples):
         self._update(vertices_from_points(xy_tuples))
