@@ -90,6 +90,15 @@ class SnapBoundsEvent:
         plot._snap_bounds()
 
 
+class SetBoundsEvent:
+    def __init__(self, bounds, **kwargs):
+        self.bounds = bounds
+        self.kwargs = kwargs
+
+    def handle_event(self, plot):
+        plot.ctx.set_plot_bounds(plot, self.bounds, **self.kwargs)
+
+
 class Plot(GLObject):
     ASPECT_MAP = {
         constants.ASPECT_NONE   : NoAspect,
@@ -524,7 +533,7 @@ class Plot(GLObject):
         self.mark_dirty()
 
     def set_bounds(self, bounds, **kwargs):
-        self.ctx.set_plot_bounds(self, bounds, **kwargs)
+        self._enqueue_event(SetBoundsEvent(bounds, **kwargs))
 
     def _paint_gl(self):
         GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)

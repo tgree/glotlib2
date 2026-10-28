@@ -242,6 +242,10 @@ class GLContext(GLObject):
         self.plots.append(p)
         return p
 
+    def set_plot_bounds(self, plot, bounds, **kwargs):
+        plot.bounds = _bounds(bounds, **kwargs)
+        plot._handle_resize()
+
     def find_plot(self, x, y):
         for p in self.plots:
             if p.visible and p.x <= x < p.x + p.w and p.y <= y < p.y + p.h:
