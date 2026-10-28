@@ -16,8 +16,5 @@ p.set_x_label('X axis')
 p.set_y_label('Y axis')
 
 w.show()
-print(p.x_label.mvp)
-print('%s x %s' % (p.x_label.width, p.x_label.height))
-print('(%s, %s)' % p.x_label.pos)
 
 app.exec()

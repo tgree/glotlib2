@@ -7,7 +7,7 @@ from . import matrix
 from . import constants
 from . import ticker
 from . import colors
-# from . import miter_lines
+from . import miter_lines
 from .gl_object import GLObject
 from .label import Label
 
@@ -100,7 +100,7 @@ class Plot(GLObject):
         self.mouse_state     = None
         self.series          = []
         self.graph_artists   = []
-        # self.border_lines    = miter_lines.from_points([(0, 0)] * 6)
+        self.border_lines    = miter_lines.from_points([(0, 0)] * 6)
         self.border_width    = border_width
         self.h_ticks         = []
         self.v_ticks         = []
@@ -197,9 +197,9 @@ class Plot(GLObject):
 
         x += 0.5
         y += 0.5
-        # ps = [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
-        # vs = glotlib.miter_lines.vertices_from_poly_points(ps)
-        # self.border_lines._update(vs)
+        ps = [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+        vs = miter_lines.vertices_from_poly_points(ps)
+        self.border_lines._update(vs)
 
         x += 0.5
         y += 0.5
@@ -376,7 +376,7 @@ class Plot(GLObject):
 
     def set_y_label(self, t, side='left'):
         self.new_y_label = (t, side)
-        self.mark_dirty
+        self.mark_dirty()
 
     def show(self):
         self.visible = True
@@ -395,18 +395,17 @@ class Plot(GLObject):
             self._set_x_label(*self.new_x_label)
         if self.new_y_label != (self.y_label.text, self.y_label_side):
             self._set_y_label(*self.new_y_label)
-        return
 
-        # self.border_lines.bind(0)
-        # self.border_lines.use_program(self.border_width, 0, self.ctx.mvp,
-        #                               (0, 0, 0, 1),
-        #                               (self.ctx.ctx_w, self.ctx.ctx_h))
-        # self.border_lines.draw()
-
+        self.border_lines.bind(0)
+        self.border_lines.use_program(self.ctx, self.border_width, 0,
+                                      self.ctx.mvp, (0, 0, 0, 1),
+                                      (self.ctx.ctx_w, self.ctx.ctx_h))
+        self.border_lines.draw()
 
         GL.glViewport(self.fb_x, self.fb_y, self.fb_w, self.fb_h)
         for ga in self.graph_artists:
             # TODO: I feel like this is where self.mvp32 goes.
+            t = 0  # Remove this dummy
             ga.draw(t, 0, self.mvp, (self.w, self.h))
 
         GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)
