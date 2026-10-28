@@ -1,5 +1,4 @@
 import math
-import threading
 
 import numpy as np
 from OpenGL import GL
@@ -10,6 +9,7 @@ from . import ticker
 from . import colors
 from . import miter_lines
 from .gl_object import GLObject
+from .event_queue import EventQueue
 from .label import Label
 from .hline import HLine
 from .vline import VLine
@@ -161,8 +161,7 @@ class Plot(GLObject):
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
 
-        self._event_queue_lock = threading.Lock()
-        self._event_queue = []
+        self._event_queue = EventQueue(self)
 
     def _init_gl(self):
         self._gen_bounds()
@@ -174,8 +173,7 @@ class Plot(GLObject):
         self._update_shared_axes()
 
     def _enqueue_event(self, event):
-        with self._event_queue_lock:
-            self._event_queue.append(event)
+        self._event_queue.enqueue(event)
         self.ctx.mark_dirty()
 
     def _get_data_bounds(self):
@@ -536,13 +534,9 @@ class Plot(GLObject):
         self._enqueue_event(SetBoundsEvent(bounds, **kwargs))
 
     def _paint_gl(self):
+        self._event_queue.process()
+
         GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)
-        if self._event_queue:
-            with self._event_queue_lock:
-                event_queue = self._event_queue
-                self._event_queue = []
-            for e in event_queue:
-                e.handle_event(self)
 
         self.border_lines.bind(0)
         self.border_lines.use_program(self.ctx, self.border_width, 0,
