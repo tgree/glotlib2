@@ -9,7 +9,7 @@ glotlib2.pyside6.init_backend()
 
 app = QApplication(sys.argv)
 
-w = glotlib2.pyside6.Window(900, 650, name='Test 2')
+w = glotlib2.pyside6.Window(900, 650, name='PySide6 Test 2')
 w.show()
 
 w.ctx.add_label((0.5, 0.5),
