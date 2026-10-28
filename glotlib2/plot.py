@@ -10,6 +10,8 @@ from . import colors
 from . import miter_lines
 from .gl_object import GLObject
 from .label import Label
+from .hline import HLine
+from .vline import VLine
 
 
 PAD_L       = 0.025
@@ -124,8 +126,8 @@ class Plot(GLObject):
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
 
-        self.new_x_label = (None, None)
-        self.new_y_label = (None, None)
+        self.new_x_label = ('', 'bottom')
+        self.new_y_label = ('', 'left')
 
     def _init_gl(self):
         self._gen_bounds()
@@ -171,7 +173,7 @@ class Plot(GLObject):
         t    = yc + h / 2
         return l, r, b, t
 
-    def _resize_gl_ctx(self, w, h):
+    def _handle_resize(self):
         p_w    = self.w
         p_h    = self.h
         xc, yc = self._context_to_data(self.x + self.w / 2, self.y + self.h / 2)
@@ -186,6 +188,17 @@ class Plot(GLObject):
                                      rx=(n_w / p_w), ry=(n_h / p_h))
 
         self._gen_ticks()
+
+    # If resizing breaks or becomes "elastic-y" then uncomment this.  I'd like
+    # to avoid the double work though.  On glfw, we seem to get the ctx update
+    # after the fb update, and the pyside6 callback has been ordered to invoke
+    # the two updates with the ctx update last so it should have similar
+    # behaviour.
+    # def _resize_gl_fb(self, _w, _h):
+    #     self._handle_resize()
+
+    def _resize_gl_ctx(self, _w, _h):
+        self._handle_resize()
 
     def _gen_bounds(self):
         x = self.x = int((self.bounds[0] + PAD_L) * self.ctx.ctx_w)
@@ -336,6 +349,24 @@ class Plot(GLObject):
         x = (x + 1) * self.w / 2 + self.x
         return x, y
 
+    def add_hline(self, y, color=None, **kwargs):
+        '''
+        Adds a horizontal line at the specified y coordinate.
+        '''
+        color = colors.make(color, self.color_iter)
+        hl    = HLine(self, y, color=color, **kwargs)
+        self.graph_artists.append(hl)
+        return hl
+
+    def add_vline(self, x, color=None, **kwargs):
+        '''
+        Adds a vertical line at the specified x coordinate.
+        '''
+        color = colors.make(color, self.color_iter)
+        vl    = VLine(self, x, color=color, **kwargs)
+        self.graph_artists.append(vl)
+        return vl
+
     def _set_x_lim(self, l, r):
         _, _, b, t = self._get_data_bounds()
         _, h = self.aspect.adjust_vert((r - l, t - b), (self.w, self.h))
@@ -405,7 +436,6 @@ class Plot(GLObject):
         GL.glViewport(self.fb_x, self.fb_y, self.fb_w, self.fb_h)
         for ga in self.graph_artists:
             # TODO: I feel like this is where self.mvp32 goes.
-            t = 0  # Remove this dummy
-            ga.draw(t, 0, self.mvp, (self.w, self.h))
+            ga.draw(0, self.mvp, (self.w, self.h))
 
         GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)

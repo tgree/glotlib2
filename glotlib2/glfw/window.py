@@ -56,10 +56,12 @@ class Window:
         glfw.swap_buffers(self.glfw_window)
 
     def _handle_window_size_changed(self, _window, w, h):
+        # This always seems to fire second.
         if not self._iconified:
             self.ctx._tree_resize_gl_ctx(w, h)
 
     def _handle_framebuffer_size_changed(self, _window, w, h):
+        # This always seems to fire first.
         if not self._iconified:
             self.ctx._tree_resize_gl_fb(w, h)
 

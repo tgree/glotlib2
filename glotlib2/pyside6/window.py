@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout
+from PySide6.QtCore import QCoreApplication
 
 from .gl_context import GLContext
 from .gl_widget import GLWidget
@@ -18,4 +19,8 @@ class Window:
         self.ctx = GLContext(self.gl_widget, msaa=msaa)
 
     def show(self):
+        # This line fixes the issue where the window seems to "expand into
+        # place" when first rendered, but I'm not sure how safe it is in a
+        # complex app:
+        # QCoreApplication.processEvents()
         self.qt_window.show()
