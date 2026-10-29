@@ -30,6 +30,8 @@ class VLine:
 
         self._vertices_lock = threading.Lock()
 
+        self.plot.ctx._defer(self._init_gl)
+
     def _init_gl(self):
         self.line_vao = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(self.line_vao)
@@ -78,8 +80,6 @@ class VLine:
         Renders the VLine in the current GL context.  Must be called from a
         thread where the plot's ctx is the active GL context.
         '''
-        if not self.line_vao:
-            self._init_gl()
         if not self.width:
             return
 

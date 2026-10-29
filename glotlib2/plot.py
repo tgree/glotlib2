@@ -9,7 +9,6 @@ from . import ticker
 from . import colors
 from . import miter_lines
 from .gl_object import GLObject
-from .event_queue import EventQueue
 from .label import Label
 from .hline import HLine
 from .vline import VLine
@@ -141,8 +140,6 @@ class Plot(GLObject):
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
 
-        self._event_queue = EventQueue()
-
     def _init_gl(self):
         self._gen_bounds()
 
@@ -151,10 +148,6 @@ class Plot(GLObject):
         self._renormalize(l, r, b, t)
         self._gen_ticks()
         self._update_shared_axes()
-
-    def _defer(self, func, *args, **kwargs):
-        self._event_queue.enqueue(func, *args, **kwargs)
-        self.ctx.mark_dirty()
 
     def _get_data_bounds(self):
         l = self.mvpi[0][3] - self.mvpi[0][0]
@@ -481,7 +474,7 @@ class Plot(GLObject):
         self.snapped = True
 
     def snap_bounds(self):
-        self._defer(self._snap_bounds)
+        self.ctx._defer(self._snap_bounds)
 
     def _set_x_lim(self, l, r):
         _, _, b, t = self._get_data_bounds()
@@ -509,7 +502,7 @@ class Plot(GLObject):
         self._gen_labels()
 
     def set_x_label(self, t, side='bottom'):
-        self._defer(self._set_x_label, t, side=side)
+        self.ctx._defer(self._set_x_label, t, side=side)
 
     def _set_y_label(self, t, side='left'):
         self.y_label.set_text(t)
@@ -521,7 +514,7 @@ class Plot(GLObject):
         self._gen_labels()
 
     def set_y_label(self, t, side='left'):
-        self._defer(self._set_y_label, t, side=side)
+        self.ctx._defer(self._set_y_label, t, side=side)
 
     def show(self):
         self.visible = True
@@ -532,11 +525,9 @@ class Plot(GLObject):
         self.mark_dirty()
 
     def set_bounds(self, bounds, **kwargs):
-        self._defer(self.ctx.set_plot_bounds, self, bounds, **kwargs)
+        self.ctx._defer(self.ctx.set_plot_bounds, self, bounds, **kwargs)
 
     def _paint_gl(self):
-        self._event_queue.process()
-
         GL.glViewport(0, 0, self.ctx.fb_w, self.ctx.fb_h)
 
         self.border_lines.bind(0)

@@ -1,6 +1,7 @@
 from OpenGL import GL
 
 from .gl_object import GLObject
+from .event_queue import EventQueue
 from .programs import Programs
 from .faces import Faces
 from .label import FlexLabel
@@ -112,6 +113,8 @@ class GLContext(GLObject):
     def __init__(self, msaa=None, delegate=None):
         super().__init__(None)
 
+        self._event_queue = EventQueue()
+
         self.opengl_context = None
         self.msaa = msaa
         self.programs = Programs()
@@ -138,6 +141,10 @@ class GLContext(GLObject):
         Returns true if we are bound to the current thread's OpenGL context.
         '''
         raise NotImplementedError
+
+    def _defer(self, func, *args, **kwargs):
+        self._event_queue.enqueue(func, *args, **kwargs)
+        self.mark_dirty()
 
     def _init_ctx(self, opengl_context, ctx_w, ctx_h, fb_w, fb_h):
         '''
@@ -168,6 +175,18 @@ class GLContext(GLObject):
 
         GL.glClearColor(1, 1, 1, 1)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+
+    def _paint_gl(self):
+        '''
+        This is called when the OS has decided that the window needs to be
+        redrawn, for instance due to a window resize event.  We must always
+        repaint the window since everything should be considered invalidated.
+        '''
+        assert self.is_active()
+
+        self._event_queue.process()
+
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
     def _update_ratios(self):
         self.r_w = self.fb_w / self.ctx_w if self.ctx_w else 0
@@ -214,16 +233,6 @@ class GLContext(GLObject):
             if mbs:
                 mbs.plot.handle_mouse_up(mbs)
                 self.mouse_button_state[button] = None
-
-    def _paint_gl(self):
-        '''
-        This is called when the OS has decided that the window needs to be
-        redrawn, for instance due to a window resize event.  We must always
-        repaint the window since everything should be considered invalidated.
-        '''
-        assert self.is_active()
-
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
     def add_label(self, *args, font=None, **kwargs):
         font = font or self.faces.vera(12)

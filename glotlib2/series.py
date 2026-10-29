@@ -1,5 +1,3 @@
-import threading
-
 import numpy as np
 from OpenGL import GL
 
@@ -14,13 +12,6 @@ INSTANCE_GEOMETRY = np.array(
      [1,  0.5],
      [0,  0.5],
      ], dtype=np.float32)
-
-
-class UpdateEntry:
-    def __init__(self, X=None, Y=None, index=None):
-        self.X = X
-        self.Y = Y
-        self.index = index
 
 
 class Series:
@@ -48,8 +39,7 @@ class Series:
         self.geom_vbo  = None
         self.point_vao = None
 
-        self._vertices_lock = threading.Lock()
-        self._vertices_queue = []
+        self.plot.ctx._defer(self._init_gl)
 
     def _init_gl(self):
         self.line_vao = GL.glGenVertexArrays(1)
@@ -77,13 +67,23 @@ class Series:
 
         GL.glBindVertexArray(0)
 
-        self.renormalize()
+        self._renormalize()
 
     def show(self):
         self.visible = True
 
     def hide(self):
         self.visible = False
+
+    def _renormalize(self):
+        if len(self.vertices) == 0:
+            return
+
+        X  = self.vertices[:, 0] * self.plot.rmatrix[0][0]
+        X += self.plot.rmatrix[0][3]
+        Y  = self.vertices[:, 1] * self.plot.rmatrix[1][1]
+        Y += self.plot.rmatrix[1][3]
+        self.vert_vbo.set_x_y_data(X, Y)
 
     def renormalize(self):
         '''
@@ -97,16 +97,11 @@ class Series:
         This does not directly update the GL state and is callable without an
         active OpenGL context.
         '''
-        if len(self.vertices) == 0:
-            return
+        self.plot.ctx._defer(self._renormalize)
 
-        X  = self.vertices[:, 0] * self.plot.rmatrix[0][0]
-        X += self.plot.rmatrix[0][3]
-        Y  = self.vertices[:, 1] * self.plot.rmatrix[1][1]
-        Y += self.plot.rmatrix[1][3]
-        with self._vertices_lock:
-            self._vertices_queue.append(UpdateEntry(X=X, Y=Y))
-        self.plot.ctx.mark_dirty()
+    def _set_x_data(self, X, V):
+        self.vertices[:, 0] = X
+        self.vert_vbo.set_x_data(V)
 
     def set_x_data(self, X):
         '''
@@ -117,10 +112,11 @@ class Series:
         X  = np.asarray(X, dtype=np.float64)
         V  = X * self.plot.rmatrix[0][0]
         V += self.plot.rmatrix[0][3]
-        self.vertices[:, 0] = X
-        with self._vertices_lock:
-            self._vertices_queue.append(UpdateEntry(X=V))
-        self.plot.ctx.mark_dirty()
+        self.plot.ctx._defer(self._set_x_data, X, V)
+
+    def _set_y_data(self, Y, V):
+        self.vertices[:, 1] = Y
+        self.vert_vbo.set_y_data(V)
 
     def set_y_data(self, Y):
         '''
@@ -131,23 +127,30 @@ class Series:
         Y  = np.asarray(Y, dtype=np.float64)
         V  = Y * self.plot.rmatrix[1][1]
         V += self.plot.rmatrix[1][3]
-        self.vertices[:, 1] = Y
-        with self._vertices_lock:
-            self._vertices_queue.append(UpdateEntry(Y=V))
-        self.plot.ctx.mark_dirty()
+        self.plot.ctx._defer(self._set_y_data, Y, V)
+
+    def _set_x_y_data(self, vertices, X, Y):
+        self.vertices = vertices
+        self.vert_vbo.set_x_y_data(X, Y)
 
     def set_x_y_data(self, X, Y):
         X = np.asarray(X, dtype=np.float64)
         Y = np.asarray(Y, dtype=np.float64)
-        self.vertices = np.column_stack((X, Y))
+        vertices = np.column_stack((X, Y))
 
         X  = X * self.plot.rmatrix[0][0]
         X += self.plot.rmatrix[0][3]
         Y  = Y * self.plot.rmatrix[1][1]
         Y += self.plot.rmatrix[1][3]
-        with self._vertices_lock:
-            self._vertices_queue.append(UpdateEntry(X=X, Y=Y))
-        self.plot.ctx.mark_dirty()
+        self.plot.ctx._defer(self._set_x_y_data, vertices, X, Y)
+
+    def _sub_x_y_data(self, index, X, Y, V):
+        overlap_v = V[:len(self.vertices) - index]
+        new_v     = V[len(self.vertices) - index:]
+        if len(overlap_v):
+            self.vertices[-len(overlap_v):] = overlap_v
+        self.vertices = np.concatenate((self.vertices, new_v))
+        self.vert_vbo.sub_x_y_data(index, X, Y)
 
     def sub_x_y_data(self, index, X, Y):
         if len(X) == 0:
@@ -156,40 +159,17 @@ class Series:
         X = np.asarray(X, dtype=np.float64)
         Y = np.asarray(Y, dtype=np.float64)
         V = np.column_stack((X, Y))
-        overlap_v = V[:len(self.vertices) - index]
-        new_v     = V[len(self.vertices) - index:]
-        if len(overlap_v):
-            self.vertices[-len(overlap_v):] = overlap_v
-        self.vertices = np.concatenate((self.vertices, new_v))
 
         X  = X * self.plot.rmatrix[0][0]
         X += self.plot.rmatrix[0][3]
         Y  = Y * self.plot.rmatrix[1][1]
         Y += self.plot.rmatrix[1][3]
-        with self._vertices_lock:
-            self._vertices_queue.append(UpdateEntry(X=X, Y=Y, index=index))
+        self.plot.ctx._defer(self._sub_x_y_data, index, X, Y, V)
 
     def append_x_y_data(self, X, Y):
         self.sub_x_y_data(len(self.vertices), X, Y)
 
     def draw(self, z, mvp, resolution):
-        if not self.line_vao:
-            self._init_gl()
-        if self._vertices_queue:
-            with self._vertices_lock:
-                vertices_queue = self._vertices_queue
-                self._vertices_queue = []
-            for ue in vertices_queue:
-                if ue.index:
-                    assert ue.X is not None and ue.Y is not None
-                    self.vert_vbo.sub_x_y_data(ue.index, ue.X, ue.Y)
-                else:
-                    if ue.X is not None and ue.Y is not None:
-                        self.vert_vbo.set_x_y_data(ue.X, ue.Y)
-                    elif ue.X is not None:
-                        self.vert_vbo.set_x_data(ue.X)
-                    else:
-                        self.vert_vbo.set_y_data(ue.Y)
         if not self.visible:
             return
 
