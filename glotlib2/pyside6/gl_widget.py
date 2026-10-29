@@ -5,6 +5,8 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtGui import QSurfaceFormat, QOpenGLContext
 from PySide6.QtWidgets import QSizePolicy
 
+from .. import constants
+
 
 class GLWidget(QOpenGLWidget):
     def __init__(self, window, msaa, parent=None):
@@ -66,13 +68,25 @@ class GLWidget(QOpenGLWidget):
         except Exception as e:
             self._dump_and_exit(e, -4)
 
-    def mousePressEvent(self, _event):
+    def mousePressEvent(self, event):
         # Unbind any stale context for debug purposes.
         self.doneCurrent()
 
-    def mouseReleaseEvent(self, _event):
+        pos = event.position()
+        y = self._glotlib_window.ctx.ctx_h - pos.y()
+        self._glotlib_window.ctx._handle_mouse_button_callback(
+            pos.x(), y, constants.MOUSE_BUTTON_LEFT,
+            constants.MOUSE_BUTTON_PRESS, 0)
+
+    def mouseReleaseEvent(self, event):
         # Unbind any stale context for debug purposes.
         self.doneCurrent()
+
+        pos = event.position()
+        y = self._glotlib_window.ctx.ctx_h - pos.y()
+        self._glotlib_window.ctx._handle_mouse_button_callback(
+            pos.x(), y, constants.MOUSE_BUTTON_LEFT,
+            constants.MOUSE_BUTTON_RELEASE, 0)
 
     def mouseMoveEvent(self, event):
         # Unbind any stale context for debug purposes.

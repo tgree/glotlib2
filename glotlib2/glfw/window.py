@@ -6,6 +6,19 @@ from OpenGL import GL
 
 from .gl_context import GLContext
 from .backend import _register_window
+from .. import constants
+
+
+MOUSE_ACTIONS = {
+    glfw.PRESS      : constants.MOUSE_BUTTON_PRESS,
+    glfw.RELEASE    : constants.MOUSE_BUTTON_RELEASE,
+}
+
+MOUSE_BUTTONS = {
+    glfw.MOUSE_BUTTON_LEFT   : constants.MOUSE_BUTTON_LEFT,
+    glfw.MOUSE_BUTTON_RIGHT  : constants.MOUSE_BUTTON_RIGHT,
+    glfw.MOUSE_BUTTON_MIDDLE : constants.MOUSE_BUTTON_MIDDLE,
+}
 
 
 class Window:
@@ -25,9 +38,11 @@ class Window:
             self.glfw_window, self._handle_window_refresh)
         glfw.set_cursor_pos_callback(
             self.glfw_window, self._handle_mouse_moved)
+        glfw.set_mouse_button_callback(
+            self.glfw_window, self._handle_mouse_button_callback)
 
         self._iconified = False
-        self.ctx = GLContext(msaa=msaa, delegate=delegate)
+        self.ctx = GLContext(self.glfw_window, msaa=msaa, delegate=delegate)
 
         glfw.make_context_current(self.glfw_window)
         profile_mask = GL.glGetIntegerv(GL.GL_CONTEXT_PROFILE_MASK)
@@ -82,3 +97,16 @@ class Window:
     def _handle_mouse_moved(self, _window, x, y):
         y = self.ctx.ctx_h - y
         self.ctx._handle_mouse_moved(x, y)
+
+    def _handle_mouse_button_callback(self, _window, button, action, mods):
+        mb = MOUSE_BUTTONS.get(button)
+        if mb is None:
+            return
+
+        action = MOUSE_ACTIONS.get(action)
+        if action is None:
+            return
+
+        self.ctx._handle_mouse_button_callback(self.ctx.mouse_x,
+                                               self.ctx.mouse_y, mb, action,
+                                               mods)

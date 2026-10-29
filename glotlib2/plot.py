@@ -23,6 +23,18 @@ MAX_H_TICKS = 10
 MAX_V_TICKS = 7
 
 
+class DragState:
+    def __init__(self, plot, mbs):
+        self.plot            = plot
+        self.mbs             = mbs
+        self.click_fb_point  = plot._context_to_data(mbs.click_x, mbs.click_y)
+
+    def handle_mouse_moved(self, x, y):
+        self.plot._gen_mvp_from_point(self.click_fb_point, (x, y))
+        self.plot._gen_ticks()
+        self.plot._update_shared_axes()
+
+
 class NoAspect:
     @staticmethod
     def apply(wh, _ctx_wh):
@@ -362,6 +374,27 @@ class Plot(GLObject):
         y = (y + 1) * self.h / 2 + self.y
         x = (x + 1) * self.w / 2 + self.x
         return x, y
+
+    def handle_mouse_down(self, mbs):
+        if self.mouse_state:
+            return
+
+        if mbs.button == constants.MOUSE_BUTTON_LEFT:
+            self.mouse_state = DragState(self, mbs)
+
+    def handle_mouse_moved(self, x, y):
+        # print('%f x %f -> %.20f x %.20f' %
+        #       (x, y, *self._context_to_data(x, y)))
+        if self.mouse_state:
+            self.mouse_state.handle_mouse_moved(x, y)
+
+    def handle_mouse_up(self, mbs):
+        if not self.mouse_state:
+            return
+        if mbs.button != self.mouse_state.mbs.button:
+            return
+
+        self.mouse_state = None
 
     def _add_series(self, cls, points=None, X=None, Y=None, color=None,
                     **kwargs):

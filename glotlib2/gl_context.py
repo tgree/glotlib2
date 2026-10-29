@@ -6,6 +6,7 @@ from .faces import Faces
 from .label import FlexLabel
 from .plot import Plot
 from . import matrix
+from . import constants
 
 
 # This is the padding on each side of the flexible window area.  Note that
@@ -87,6 +88,15 @@ def _bounds(b, pad_l=PAD_H, pad_r=PAD_H, pad_b=PAD_V, pad_t=PAD_V):
             pad_b + (1 - (pad_b + pad_t))*c[3])
 
 
+class MouseButtonState:
+    def __init__(self, plot, button, x, y, mods):
+        self.plot    = plot
+        self.button  = button
+        self.click_x = x
+        self.click_y = y
+        self.mods    = mods
+
+
 class GLContextDelegate:
     def handle_mouse_moved(self, plot, x, y):
         pass
@@ -114,6 +124,10 @@ class GLContext(GLObject):
         self.mvp   = None
         self.r_w   = None
         self.r_h   = None
+
+        self.mouse_x = None
+        self.mouse_y = None
+        self.mouse_button_state = {}
 
         self.plots = []
 
@@ -183,8 +197,23 @@ class GLContext(GLObject):
         self._update_ratios()
 
     def _handle_mouse_moved(self, x, y):
-        plot = self.find_plot(x, y)
-        self.delegate.handle_mouse_moved(plot, x, y)
+        self.mouse_x, self.mouse_y = x, y
+        for p in self.plots:
+            p.handle_mouse_moved(x, y)
+        self.delegate.handle_mouse_moved(self.find_plot(x, y), x, y)
+
+    def _handle_mouse_button_callback(self, x, y, button, action, mods):
+        if action == constants.MOUSE_BUTTON_PRESS:
+            plot = self.find_plot(x, y)
+            if plot:
+                mbs = MouseButtonState(plot, button, x, y, mods)
+                self.mouse_button_state[button] = mbs
+                plot.handle_mouse_down(mbs)
+        elif action == constants.MOUSE_BUTTON_RELEASE:
+            mbs = self.mouse_button_state.get(button)
+            if mbs:
+                mbs.plot.handle_mouse_up(mbs)
+                self.mouse_button_state[button] = None
 
     def _paint_gl(self):
         '''
