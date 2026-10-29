@@ -6,8 +6,6 @@ from PySide6.QtWidgets import QApplication
 import glotlib2.pyside6
 import glotlib2
 
-import time
-
 
 NPOINTS = 5000000
 
