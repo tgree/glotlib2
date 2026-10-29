@@ -129,7 +129,7 @@ class Plot(GLObject):
                              visible=False, theta=math.pi / 2)
         self.y_label_side = 'left'
 
-        self._event_queue = EventQueue(self)
+        self._event_queue = EventQueue()
 
     def _init_gl(self):
         self._gen_bounds()
@@ -140,12 +140,8 @@ class Plot(GLObject):
         self._gen_ticks()
         self._update_shared_axes()
 
-    def _enqueue_event(self, event):
-        self._event_queue.enqueue(event)
-        self.ctx.mark_dirty()
-
-    def _enqueue_call(self, func, *args, **kwargs):
-        self._event_queue.enqueue_call(func, *args, **kwargs)
+    def _defer(self, func, *args, **kwargs):
+        self._event_queue.enqueue(func, *args, **kwargs)
         self.ctx.mark_dirty()
 
     def _get_data_bounds(self):
@@ -452,7 +448,7 @@ class Plot(GLObject):
         self.snapped = True
 
     def snap_bounds(self):
-        self._enqueue_call(self._snap_bounds)
+        self._defer(self._snap_bounds)
 
     def _set_x_lim(self, l, r):
         _, _, b, t = self._get_data_bounds()
@@ -480,7 +476,7 @@ class Plot(GLObject):
         self._gen_labels()
 
     def set_x_label(self, t, side='bottom'):
-        self._enqueue_call(self._set_x_label, t, side=side)
+        self._defer(self._set_x_label, t, side=side)
 
     def _set_y_label(self, t, side='left'):
         self.y_label.set_text(t)
@@ -492,7 +488,7 @@ class Plot(GLObject):
         self._gen_labels()
 
     def set_y_label(self, t, side='left'):
-        self._enqueue_call(self._set_y_label, t, side=side)
+        self._defer(self._set_y_label, t, side=side)
 
     def show(self):
         self.visible = True
@@ -503,7 +499,7 @@ class Plot(GLObject):
         self.mark_dirty()
 
     def set_bounds(self, bounds, **kwargs):
-        self._enqueue_call(self.ctx.set_plot_bounds, self, bounds, **kwargs)
+        self._defer(self.ctx.set_plot_bounds, self, bounds, **kwargs)
 
     def _paint_gl(self):
         self._event_queue.process()

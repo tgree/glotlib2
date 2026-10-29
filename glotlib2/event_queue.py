@@ -1,39 +1,28 @@
 import threading
-
-
-class DeferredCall:
-    def __init__(self, func, *args, **kwargs):
-        self.func   = func
-        self.args   = args
-        self.kwargs = kwargs
-
-    def handle_event(self, _owner):
-        self.func(*self.args, **self.kwargs)
+from collections import deque
+from functools import partial
 
 
 class EventQueue:
     '''
-    Class to defer events to a later time.
+    Class to defer function calls to a later time.
     '''
-    def __init__(self, owner):
-        self.owner = owner
-        self.lock  = threading.Lock()
-        self.queue = []
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.queue = deque()
 
-    def enqueue(self, event):
+    def enqueue(self, func, *args, **kwargs):
+        deferred_call = partial(func, *args, **kwargs)
         with self.lock:
-            self.queue.append(event)
-
-    def enqueue_call(self, func, *args, **kwargs):
-        self.enqueue(DeferredCall(func, *args, **kwargs))
+            self.queue.append(deferred_call)
 
     def process(self):
         if not self.queue:
             return
 
         with self.lock:
-            queue = self.queue
-            self.queue = []
+            local_queue = self.queue
+            self.queue = deque()
 
-        for e in queue:
-            e.handle_event(self.owner)
+        for deferred_call in local_queue:
+            deferred_call()
