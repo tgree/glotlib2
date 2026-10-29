@@ -46,6 +46,9 @@ class StepSeries(series.Series):
 
         super().set_x_y_data(vX, vY)
 
+    def sub_x_y_data(self, index, X, Y):
+        raise NotImplementedError
+
     def append_x_y_data(self, X, Y):
         # Append data with a step change on the left side:
         #

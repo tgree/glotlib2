@@ -41,7 +41,7 @@ class VBO:
     def __len__(self):
         return len(self.vertices)
 
-    def _sub_vbo_tail(self, N):
+    def _sub_vbo_range(self, index, N):
         '''
         Writes the last N values of self.vertices to the VBO, enlarging the
         VBO buffer if necessary.
@@ -54,12 +54,21 @@ class VBO:
             GL.glBufferData(GL.GL_ARRAY_BUFFER,
                             4 * self.ncomponents * self.capacity,
                             None, self.gl_type)
+            index = 0
             N = len(self.vertices)
 
         # Sub in the new data.
-        offset = 4 * self.ncomponents * (len(self.vertices) - N)
+        offset = 4 * self.ncomponents * index
         size   = 4 * self.ncomponents * N
-        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, offset, size, self.vertices[-N:])
+        GL.glBufferSubData(GL.GL_ARRAY_BUFFER, offset, size,
+                           self.vertices[index:index + N])
+
+    def _sub_vbo_tail(self, N):
+        '''
+        Writes the last N values of self.vertices to the VBO, enlarging the
+        VBO buffer if necessary.
+        '''
+        self._sub_vbo_range(len(self.vertices) - N, N)
 
     def _update_vbo(self):
         self._sub_vbo_tail(len(self.vertices))
@@ -133,9 +142,9 @@ class VBO:
         overlap_data = sub_data[:len(self.vertices) - index]
         new_data     = sub_data[len(self.vertices) - index:]
         if len(overlap_data):
-            self.vertices[-len(overlap_data):] = overlap_data
+            self.vertices[index:index + len(overlap_data)] = overlap_data
         self.vertices = np.concatenate((self.vertices, new_data))
-        self._sub_vbo_tail(len(X))
+        self._sub_vbo_range(index, len(X))
 
 
 class StaticVBO(VBO):

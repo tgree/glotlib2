@@ -148,7 +148,7 @@ class Series:
         overlap_v = V[:len(self.vertices) - index]
         new_v     = V[len(self.vertices) - index:]
         if len(overlap_v):
-            self.vertices[-len(overlap_v):] = overlap_v
+            self.vertices[index:index + len(overlap_v)] = overlap_v
         self.vertices = np.concatenate((self.vertices, new_v))
         self.vert_vbo.sub_x_y_data(index, X, Y)
 
