@@ -67,38 +67,6 @@ class SquareAspect:
         return (wh[1] * ctx_aspect, wh[1])
 
 
-class SetXLabelEvent:
-    def __init__(self, text, side):
-        self.text = text
-        self.side = side
-
-    def handle_event(self, plot):
-        plot._set_x_label(self.text, self.side)
-
-
-class SetYLabelEvent:
-    def __init__(self, text, side):
-        self.text = text
-        self.side = side
-
-    def handle_event(self, plot):
-        plot._set_y_label(self.text, self.side)
-
-
-class SnapBoundsEvent:
-    def handle_event(self, plot):
-        plot._snap_bounds()
-
-
-class SetBoundsEvent:
-    def __init__(self, bounds, **kwargs):
-        self.bounds = bounds
-        self.kwargs = kwargs
-
-    def handle_event(self, plot):
-        plot.ctx.set_plot_bounds(plot, self.bounds, **self.kwargs)
-
-
 class Plot(GLObject):
     ASPECT_MAP = {
         constants.ASPECT_NONE   : NoAspect,
@@ -174,6 +142,10 @@ class Plot(GLObject):
 
     def _enqueue_event(self, event):
         self._event_queue.enqueue(event)
+        self.ctx.mark_dirty()
+
+    def _enqueue_call(self, func, *args, **kwargs):
+        self._event_queue.enqueue_call(func, *args, **kwargs)
         self.ctx.mark_dirty()
 
     def _get_data_bounds(self):
@@ -480,7 +452,7 @@ class Plot(GLObject):
         self.snapped = True
 
     def snap_bounds(self):
-        self._enqueue_event(SnapBoundsEvent())
+        self._enqueue_call(self._snap_bounds)
 
     def _set_x_lim(self, l, r):
         _, _, b, t = self._get_data_bounds()
@@ -508,7 +480,7 @@ class Plot(GLObject):
         self._gen_labels()
 
     def set_x_label(self, t, side='bottom'):
-        self._enqueue_event(SetXLabelEvent(t, side))
+        self._enqueue_call(self._set_x_label, t, side=side)
 
     def _set_y_label(self, t, side='left'):
         self.y_label.set_text(t)
@@ -520,7 +492,7 @@ class Plot(GLObject):
         self._gen_labels()
 
     def set_y_label(self, t, side='left'):
-        self._enqueue_event(SetYLabelEvent(t, side))
+        self._enqueue_call(self._set_y_label, t, side=side)
 
     def show(self):
         self.visible = True
@@ -531,7 +503,7 @@ class Plot(GLObject):
         self.mark_dirty()
 
     def set_bounds(self, bounds, **kwargs):
-        self._enqueue_event(SetBoundsEvent(bounds, **kwargs))
+        self._enqueue_call(self.ctx.set_plot_bounds, self, bounds, **kwargs)
 
     def _paint_gl(self):
         self._event_queue.process()
