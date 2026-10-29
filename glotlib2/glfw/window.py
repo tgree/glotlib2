@@ -18,6 +18,11 @@ MOUSE_BUTTONS = {
     glfw.MOUSE_BUTTON_LEFT   : constants.MOUSE_BUTTON_LEFT,
     glfw.MOUSE_BUTTON_RIGHT  : constants.MOUSE_BUTTON_RIGHT,
     glfw.MOUSE_BUTTON_MIDDLE : constants.MOUSE_BUTTON_MIDDLE,
+    glfw.MOUSE_BUTTON_4      : None,
+    glfw.MOUSE_BUTTON_5      : None,
+    glfw.MOUSE_BUTTON_6      : None,
+    glfw.MOUSE_BUTTON_7      : None,
+    glfw.MOUSE_BUTTON_8      : None,
 }
 
 

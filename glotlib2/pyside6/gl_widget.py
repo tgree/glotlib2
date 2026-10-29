@@ -4,8 +4,40 @@ import traceback
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtGui import QSurfaceFormat, QOpenGLContext
 from PySide6.QtWidgets import QSizePolicy
+from PySide6.QtCore import Qt
 
 from .. import constants
+
+
+MOUSE_BUTTONS = {
+    Qt.MouseButton.LeftButton    : constants.MOUSE_BUTTON_LEFT,
+    Qt.MouseButton.RightButton   : constants.MOUSE_BUTTON_RIGHT,
+    Qt.MouseButton.MiddleButton  : constants.MOUSE_BUTTON_MIDDLE,
+    Qt.MouseButton.ExtraButton1  : None,
+    Qt.MouseButton.ExtraButton2  : None,
+    Qt.MouseButton.ExtraButton3  : None,
+    Qt.MouseButton.ExtraButton4  : None,
+    Qt.MouseButton.ExtraButton5  : None,
+    Qt.MouseButton.ExtraButton6  : None,
+    Qt.MouseButton.ExtraButton7  : None,
+    Qt.MouseButton.ExtraButton8  : None,
+    Qt.MouseButton.ExtraButton9  : None,
+    Qt.MouseButton.ExtraButton10 : None,
+    Qt.MouseButton.ExtraButton11 : None,
+    Qt.MouseButton.ExtraButton12 : None,
+    Qt.MouseButton.ExtraButton13 : None,
+    Qt.MouseButton.ExtraButton14 : None,
+    Qt.MouseButton.ExtraButton15 : None,
+    Qt.MouseButton.ExtraButton16 : None,
+    Qt.MouseButton.ExtraButton17 : None,
+    Qt.MouseButton.ExtraButton18 : None,
+    Qt.MouseButton.ExtraButton19 : None,
+    Qt.MouseButton.ExtraButton20 : None,
+    Qt.MouseButton.ExtraButton21 : None,
+    Qt.MouseButton.ExtraButton22 : None,
+    Qt.MouseButton.ExtraButton23 : None,
+    Qt.MouseButton.ExtraButton24 : None,
+}
 
 
 class GLWidget(QOpenGLWidget):
@@ -72,21 +104,27 @@ class GLWidget(QOpenGLWidget):
         # Unbind any stale context for debug purposes.
         self.doneCurrent()
 
+        mb = MOUSE_BUTTONS.get(event.button())
+        if mb is None:
+            return
+
         pos = event.position()
         y = self._glotlib_window.ctx.ctx_h - pos.y()
         self._glotlib_window.ctx._handle_mouse_button_callback(
-            pos.x(), y, constants.MOUSE_BUTTON_LEFT,
-            constants.MOUSE_BUTTON_PRESS, 0)
+            pos.x(), y, mb, constants.MOUSE_BUTTON_PRESS, 0)
 
     def mouseReleaseEvent(self, event):
         # Unbind any stale context for debug purposes.
         self.doneCurrent()
 
+        mb = MOUSE_BUTTONS.get(event.button())
+        if mb is None:
+            return
+
         pos = event.position()
         y = self._glotlib_window.ctx.ctx_h - pos.y()
         self._glotlib_window.ctx._handle_mouse_button_callback(
-            pos.x(), y, constants.MOUSE_BUTTON_LEFT,
-            constants.MOUSE_BUTTON_RELEASE, 0)
+            pos.x(), y, mb, constants.MOUSE_BUTTON_RELEASE, 0)
 
     def mouseMoveEvent(self, event):
         # Unbind any stale context for debug purposes.
