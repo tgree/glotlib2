@@ -22,10 +22,6 @@ class GLContext(gl_context.GLContext):
         return (self.opengl_context ==
                 ctypes.cast(current_context, ctypes.c_void_p).value)
 
-    def _get_cursor_pos(self):
-        x, y = glfw.get_cursor_pos(self._glfw_window)
-        return x, self.ctx_h - y
-
     def mark_dirty(self):
         self._dirty = True
         glfw.post_empty_event()

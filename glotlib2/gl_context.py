@@ -1,3 +1,5 @@
+import time
+
 from OpenGL import GL
 
 from .gl_object import GLObject
@@ -8,6 +10,7 @@ from .label import FlexLabel
 from .plot import Plot
 from . import matrix
 from . import constants
+from . import periodic
 
 
 # This is the padding on each side of the flexible window area.  Note that
@@ -105,8 +108,8 @@ class GLContextDelegate:
     def handle_key_press(self, key):
         pass
 
-    def update_geometry(self, _t):
-        return False
+    def update_geometry(self):
+        pass
 
 
 class GLContext(GLObject):
@@ -135,6 +138,9 @@ class GLContext(GLObject):
         self.modifier_mask = 0
 
         self.plots = []
+        self.frame_time_0 = None
+        self.frame_time = 0
+        self.fps_ticker = None
 
         self.delegate = delegate or GLContextDelegate()
 
@@ -143,6 +149,18 @@ class GLContext(GLObject):
         Returns true if we are bound to the current thread's OpenGL context.
         '''
         raise NotImplementedError
+
+    def set_fps(self, fps):
+        '''
+        This sets the frame rate for periodic updates (animation).  If you want
+        your app to do animation based on time rather than simply being
+        reactive to input device events, set the fps to a non-zero value.
+        '''
+        interval = 1. / fps
+        if self.fps_ticker is None:
+            self.fps_ticker = periodic.Ticker(interval, self.mark_dirty)
+        else:
+            self.fps_ticker.interval = interval
 
     def _defer(self, func, *args, **kwargs):
         self._event_queue.enqueue(func, *args, **kwargs)
@@ -187,6 +205,12 @@ class GLContext(GLObject):
         assert self.is_active()
 
         self._event_queue.process()
+
+        t = time.monotonic()
+        if self.frame_time_0 is None:
+            self.frame_time_0 = t
+        self.frame_time = t - self.frame_time_0
+        self.delegate.update_geometry()
 
         GL.glClear(GL.GL_COLOR_BUFFER_BIT)
 
