@@ -2,7 +2,6 @@ import sys
 import math
 
 import numpy as np
-from PySide6 import QtCore, QtWidgets
 from PySide6.QtWidgets import (QApplication, QDoubleSpinBox, QHBoxLayout,
                                QLabel, QPushButton, QVBoxLayout, QWidget,
                                QLineEdit)

@@ -326,7 +326,7 @@ class GLWidgetFocusable(QtWidgets.QFrame):
 
         # Create the GLWidget and save off the ctx value locally so that the
         # client can use this identically to how they would use a GLWidget.
-        self.gl_widget = GLWidget(None, parent=self,
+        self.gl_widget = GLWidget(msaa, parent=self, delegate=delegate,
                                   focus_policy=Qt.FocusPolicy.NoFocus)
         self.ctx = self.gl_widget.ctx
 
