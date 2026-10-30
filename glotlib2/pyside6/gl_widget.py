@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QSizePolicy
 from PySide6.QtCore import Qt
 
 from .. import constants
+from .gl_context import GLContext
 
 
 MOUSE_BUTTONS = {
@@ -165,10 +166,8 @@ PYSIDE_KEYPAD_KEYS = {
 
 
 class GLWidget(QOpenGLWidget):
-    def __init__(self, window, msaa, parent=None):
+    def __init__(self, msaa, parent=None, delegate=None):
         super().__init__(parent)
-        self._glotlib_window = window
-        self._glotlib_msaa = msaa
         self._last_ctx_size = (-1, -1)
         self._last_fb_size = (-1, -1)
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
@@ -176,6 +175,8 @@ class GLWidget(QOpenGLWidget):
         self.setMinimumSize(16, 16)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        self.ctx = GLContext(self, msaa=msaa, delegate=delegate)
 
     def _validate_gl_profile(self):
         if (self.context().format().profile() !=
@@ -194,23 +195,23 @@ class GLWidget(QOpenGLWidget):
             ctx_w, ctx_h = self.width(), self.height()
             surface_dim = self.context().surface().size()
             fb_w, fb_h = surface_dim.width(), surface_dim.height()
-            self._glotlib_window.ctx._init_ctx(QOpenGLContext.currentContext(),
-                                               ctx_w, ctx_h, fb_w, fb_h)
+            self.ctx._init_ctx(QOpenGLContext.currentContext(), ctx_w, ctx_h,
+                               fb_w, fb_h)
         except Exception as e:
             self._dump_and_exit(e, -2)
 
     def resizeGL(self, w, h):
         try:
-            ratio = self._glotlib_window.qt_window.devicePixelRatio()
+            ratio = self.devicePixelRatio()
             fb_size = (int(w * ratio), int(h * ratio))
             if fb_size != self._last_fb_size:
                 self._last_fb_size = fb_size
-                self._glotlib_window.ctx._tree_resize_gl_fb(*fb_size)
+                self.ctx._tree_resize_gl_fb(*fb_size)
 
             ctx_size = (w, h)
             if ctx_size != self._last_ctx_size:
                 self._last_ctx_size = ctx_size
-                self._glotlib_window.ctx._tree_resize_gl_ctx(w, h)
+                self.ctx._tree_resize_gl_ctx(w, h)
         except Exception as e:
             self._dump_and_exit(e, -3)
 
@@ -221,7 +222,7 @@ class GLWidget(QOpenGLWidget):
         screen here.
         '''
         try:
-            self._glotlib_window.ctx._tree_paint_gl()
+            self.ctx._tree_paint_gl()
         except Exception as e:
             self._dump_and_exit(e, -4)
 
@@ -234,8 +235,8 @@ class GLWidget(QOpenGLWidget):
             return
 
         pos = event.position()
-        y = self._glotlib_window.ctx.ctx_h - pos.y()
-        self._glotlib_window.ctx._handle_mouse_button_callback(
+        y = self.ctx.ctx_h - pos.y()
+        self.ctx._handle_mouse_button_callback(
             pos.x(), y, mb, constants.MOUSE_BUTTON_PRESS, 0)
 
     def mouseReleaseEvent(self, event):
@@ -247,8 +248,8 @@ class GLWidget(QOpenGLWidget):
             return
 
         pos = event.position()
-        y = self._glotlib_window.ctx.ctx_h - pos.y()
-        self._glotlib_window.ctx._handle_mouse_button_callback(
+        y = self.ctx.ctx_h - pos.y()
+        self.ctx._handle_mouse_button_callback(
             pos.x(), y, mb, constants.MOUSE_BUTTON_RELEASE, 0)
 
     def mouseMoveEvent(self, event):
@@ -256,8 +257,8 @@ class GLWidget(QOpenGLWidget):
         self.doneCurrent()
 
         pos = event.position()
-        y = self._glotlib_window.ctx.ctx_h - pos.y()
-        self._glotlib_window.ctx._handle_mouse_moved(pos.x(), y)
+        y = self.ctx.ctx_h - pos.y()
+        self.ctx._handle_mouse_moved(pos.x(), y)
 
     def wheelEvent(self, event):
         # Unbind any stale context for debug purposes.
@@ -267,8 +268,8 @@ class GLWidget(QOpenGLWidget):
         dx = delta.x() / 15.
         dy = delta.y() / 15.
         pos = event.position()
-        y = self._glotlib_window.ctx.ctx_h - pos.y()
-        self._glotlib_window.ctx._handle_mouse_scrolled(pos.x(), y, dx, dy)
+        y = self.ctx.ctx_h - pos.y()
+        self.ctx._handle_mouse_scrolled(pos.x(), y, dx, dy)
 
     def keyPressEvent(self, event):
         if event.modifiers() & Qt.KeyboardModifier.KeypadModifier:
@@ -278,9 +279,8 @@ class GLWidget(QOpenGLWidget):
         if key is None:
             return
 
-        ctx = self._glotlib_window.ctx
-        ctx._handle_key_event(ctx.mouse_x, ctx.mouse_y, key,
-                              constants.KEY_PRESS)
+        self.ctx._handle_key_event(self.ctx.mouse_x, self.ctx.mouse_y, key,
+                                   constants.KEY_PRESS)
 
     def keyReleaseEvent(self, event):
         if event.modifiers() & Qt.KeyboardModifier.KeypadModifier:
@@ -290,6 +290,5 @@ class GLWidget(QOpenGLWidget):
         if key is None:
             return
 
-        ctx = self._glotlib_window.ctx
-        ctx._handle_key_event(ctx.mouse_x, ctx.mouse_y, key,
-                              constants.KEY_RELEASE)
+        self.ctx._handle_key_event(self.ctx.mouse_x, self.ctx.mouse_y, key,
+                                   constants.KEY_RELEASE)

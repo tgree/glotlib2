@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout
 # from PySide6.QtCore import QCoreApplication
 
-from .gl_context import GLContext
 from .gl_widget import GLWidget
 
 
@@ -13,10 +12,10 @@ class Window:
         self.qt_window.move(x, y)
 
         layout = QHBoxLayout(self.qt_window)
-        self.gl_widget = GLWidget(self, msaa, parent=self.qt_window)
+        self.gl_widget = GLWidget(msaa, parent=self.qt_window,
+                                  delegate=delegate)
+        self.ctx = self.gl_widget.ctx
         layout.addWidget(self.gl_widget)
-
-        self.ctx = GLContext(self.gl_widget, msaa=msaa, delegate=delegate)
 
     def show(self):
         # This line fixes the issue where the window seems to "expand into
