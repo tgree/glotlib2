@@ -1,6 +1,5 @@
 from ctypes import c_void_p
 from enum import IntEnum
-import threading
 
 from OpenGL import GL
 
@@ -53,13 +52,11 @@ class Label(GLObject):
         self.width           = 0
         self.height          = 0
         self.vertices        = None
-        self.nvertices       = None
         self.tex_coords      = None
         self.vao             = None
         self.geom_vbo        = None
         self.tex_vbo         = None
-        self._paint_lock     = threading.Lock()
-        self._vertices_dirty = None
+        self.nbound_vertices = 0
 
         self._gen_vertices(text)
 
@@ -78,20 +75,16 @@ class Label(GLObject):
         GL.glBindVertexArray(0)
 
     def _paint_gl(self):
-        with self._paint_lock:
-            if self._vertices_dirty:
-                self._vertices_dirty = False
-                self._upload_vertices()
-            if self.vertices.size == 0:
-                return
+        if not self.nbound_vertices:
+            return
 
-            mvp = self.ctx.mvp @ self.mvp
-            GL.glBindVertexArray(self.vao)
-            self.font.bind(0)
-            self.ctx.programs.text.use(0, mvp, self.font, color=self.color)
-            GL.glEnable(GL.GL_BLEND)
-            GL.glDrawArrays(GL.GL_TRIANGLES, 0, len(self.vertices))
-            GL.glDisable(GL.GL_BLEND)
+        mvp = self.ctx.mvp @ self.mvp
+        GL.glBindVertexArray(self.vao)
+        self.font.bind(0)
+        self.ctx.programs.text.use(0, mvp, self.font, color=self.color)
+        GL.glEnable(GL.GL_BLEND)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.nbound_vertices)
+        GL.glDisable(GL.GL_BLEND)
 
     def _update_mvp(self):
         dx = round(self.width * self.halign / 2)
@@ -103,18 +96,23 @@ class Label(GLObject):
             )
 
     def _gen_vertices(self, text):
+        '''
+        May be called without an active GL context to update the vertices list
+        and get new text dimensions.  _upload_vertices() will be deferred to
+        the next update.
+        '''
         vertices, tex_coords, width, height = self.font.gen_vertices_left(text)
 
-        with self._paint_lock:
-            self._vertices_dirty = True
-            self.text            = text
-            self.vertices        = vertices
-            self.tex_coords      = tex_coords
-            self.width           = width
-            self.height          = height
-            self._update_mvp()
+        self.text            = text
+        self.vertices        = vertices
+        self.tex_coords      = tex_coords
+        self.width           = width
+        self.height          = height
+        self._update_mvp()
+        self.ctx._defer(self._upload_vertices)
 
     def _upload_vertices(self):
+        self.nbound_vertices = len(self.vertices)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.geom_vbo)
         GL.glBufferData(GL.GL_ARRAY_BUFFER, self.vertices,
                         GL.GL_STATIC_DRAW)
@@ -126,19 +124,20 @@ class Label(GLObject):
 
     def set_text(self, text):
         self._gen_vertices(text)
-        self.ctx.mark_dirty()
+
+    def _set_pos(self, pos):
+        self.pos = (int(pos[0]), int(pos[1]))
+        self._update_mvp()
 
     def set_pos(self, pos):
-        with self._paint_lock:
-            self.pos = (int(pos[0]), int(pos[1]))
-            self._update_mvp()
-        self.ctx.mark_dirty()
+        self.ctx._defer(self._set_pos, pos)
+
+    def _set_theta(self, theta):
+        self.theta = theta
+        self._update_mvp()
 
     def set_theta(self, theta):
-        with self._paint_lock:
-            self.theta = theta
-            self._update_mvp()
-        self.ctx.mark_dirty()
+        self.ctx._defer(self._set_theta, theta)
 
     def show(self):
         self.visible = True
