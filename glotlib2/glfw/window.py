@@ -253,7 +253,7 @@ class Window:
 
     def _handle_mouse_scrolled(self, _window, dx, dy):
         self.ctx._handle_mouse_scrolled(self.ctx.mouse_x, self.ctx.mouse_y,
-                                        dx, dy)
+                                        dx, dy, self.ctx._modifier_mask)
 
     def _handle_key_event(self, _window, key, _scancode, action, _mods):
         action = KEY_ACTIONS.get(action)

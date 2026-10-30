@@ -174,7 +174,7 @@ class GLWidget(QOpenGLWidget):
                            QSizePolicy.Policy.Expanding)
         self.setMinimumSize(16, 16)
         self.setMouseTracking(True)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.ctx = GLContext(self, msaa=msaa, delegate=delegate)
 
@@ -264,12 +264,21 @@ class GLWidget(QOpenGLWidget):
         # Unbind any stale context for debug purposes.
         self.doneCurrent()
 
+        ps_mods = event.modifiers()
+        mods = 0
+        if ps_mods & Qt.KeyboardModifier.ShiftModifier:
+            mods |= constants.MOD_LEFT_SHIFT
+        if ps_mods & Qt.KeyboardModifier.ControlModifier:
+            mods |= constants.MOD_LEFT_CONTROL
+        if ps_mods & Qt.KeyboardModifier.AltModifier:
+            mods |= constants.MOD_LEFT_ALT
+
         delta = event.angleDelta()
         dx = delta.x() / 15.
         dy = delta.y() / 15.
         pos = event.position()
         y = self.ctx.ctx_h - pos.y()
-        self.ctx._handle_mouse_scrolled(pos.x(), y, dx, dy)
+        self.ctx._handle_mouse_scrolled(pos.x(), y, dx, dy, mods)
 
     def keyPressEvent(self, event):
         if event.modifiers() & Qt.KeyboardModifier.KeypadModifier:

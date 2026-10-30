@@ -135,7 +135,7 @@ class GLContext(GLObject):
         self.mouse_y = None
         self.mouse_button_state = {}
 
-        self.modifier_mask = 0
+        self._modifier_mask = 0
 
         self.plots = []
         self.frame_time_0 = None
@@ -260,17 +260,17 @@ class GLContext(GLObject):
                 mbs.plot.handle_mouse_up(mbs)
                 self.mouse_button_state[button] = None
 
-    def _handle_mouse_scrolled(self, x, y, dx, dy):
+    def _handle_mouse_scrolled(self, x, y, dx, dy, mods):
         plot = self.find_plot(x, y)
         if plot:
-            shift = self.modifier_mask & constants.MOD_ANY_SHIFT
-            alt   = self.modifier_mask & constants.MOD_ANY_ALT
+            shift = mods & constants.MOD_ANY_SHIFT
+            alt   = mods & constants.MOD_ANY_ALT
             plot.handle_mouse_scrolled(x, y, dx, dy, shift, alt)
 
     def _handle_key_event(self, x, y, key, action):
         key_mod_mask = constants.KEY_TO_MODIFIER_MAP.get(key, 0)
         if action == constants.KEY_PRESS:
-            self.modifier_mask |= key_mod_mask
+            self._modifier_mask |= key_mod_mask
             if key == ' ':
                 p = self.find_plot(x, y)
                 if p:
@@ -278,7 +278,7 @@ class GLContext(GLObject):
             else:
                 self.delegate.handle_key_press(key)
         else:
-            self.modifier_mask &= ~key_mod_mask
+            self._modifier_mask &= ~key_mod_mask
 
     def add_label(self, *args, font=None, **kwargs):
         font = font or self.faces.vera(12)
