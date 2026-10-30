@@ -13,85 +13,41 @@ import glotlib2.pyside6
 NVERTICES = 501
 
 
-class FocusableGLContainer(QtWidgets.QFrame):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        # Configure the Frame to allow and show focus
-        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
-        self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        # self.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
-
-        # On macOS, force it to use the blue ring for focus hilighting.  This
-        # is a no-op on any other OS.
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_MacShowFocusRect, True)
-
-        # Create a glotlib2 widget.
-        self.gl_widget = glotlib2.pyside6.GLWidget(None, parent=self)
-
-        # Pack it tightly inside a layout with small margins that will be used
-        # by the focus highlight.
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(3, 3, 3, 3)
-        layout.addWidget(self.gl_widget)
-
-        # Apply a lightweight StyleSheet rule to hook into Qt's native focus
-        # palette.  This tells the frame to draw the OS-native focus ring when
-        # targeted
-        self.setStyleSheet("""
-            FocusableGLContainer {
-                /* border: 1px solid palette(mid); */
-                border-radius: 4px;
-                background-color: transparent;
-            }
-            FocusableGLContainer:focus {
-                border: 3px solid palette(highlight);
-            }
-        """)
-
-    def keyPressEvent(self, event):
-        self.gl_widget.keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        self.gl_widget.keyReleaseEvent(event)
-
-
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PySide6 Test 13")
+        self.setWindowTitle('PySide6 Test 13')
         self.resize(1100, 750)
 
         main_layout = QHBoxLayout(self)
         sidebar = QVBoxLayout()
 
         # Add sample text inputs to demonstrate moving focus cleanly via TAB
-        sidebar.addWidget(QLabel("Sample Parameter Input 1:"))
+        sidebar.addWidget(QLabel('Sample Parameter Input 1:'))
         self.input1 = QLineEdit()
-        self.input1.setPlaceholderText("Press Tab to navigate out...")
+        self.input1.setPlaceholderText('Press Tab to navigate out...')
         sidebar.addWidget(self.input1)
 
-        sidebar.addWidget(QLabel("Sample Parameter Input 2:"))
+        sidebar.addWidget(QLabel('Sample Parameter Input 2:'))
         self.input2 = QLineEdit()
         sidebar.addWidget(self.input2)
 
-        sidebar.addWidget(QLabel("Camera Depth Info Control:"))
+        sidebar.addWidget(QLabel('Camera Depth Info Control:'))
         self.depth_box = QDoubleSpinBox()
         self.depth_box.setRange(-20.0, -1.0)
         self.depth_box.setValue(-3.5)
         sidebar.addWidget(self.depth_box)
 
-        self.reset_btn = QPushButton("Reset Scene View")
+        self.reset_btn = QPushButton('Reset Scene View')
         sidebar.addWidget(self.reset_btn)
 
         sidebar.addStretch()
         main_layout.addLayout(sidebar, stretch=1)
 
-        # Setup Interactive Viewport Container
-        self.gl_container = FocusableGLContainer()
-        main_layout.addWidget(self.gl_container, stretch=4)
+        self.gl_widget = glotlib2.pyside6.GLWidgetFocusable(None)
+        main_layout.addWidget(self.gl_widget, stretch=4)
 
-        ctx = self.gl_container.gl_widget.ctx
+        ctx = self.gl_widget.ctx
         self.plot = ctx.add_plot(limits=(0, -1, math.pi * 2, 1))
         X = np.linspace(0, math.pi * 2, NVERTICES)
         Y = np.sin(X)
@@ -100,7 +56,7 @@ class MainWindow(QWidget):
         self.plot.set_y_label('Y label goes here')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     glotlib2.pyside6.init_backend()
 
     app = QApplication(sys.argv)

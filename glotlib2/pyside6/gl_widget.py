@@ -5,6 +5,7 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtGui import QSurfaceFormat, QOpenGLContext
 from PySide6.QtWidgets import QSizePolicy
 from PySide6.QtCore import Qt
+from PySide6 import QtWidgets
 
 from .. import constants
 from .gl_context import GLContext
@@ -166,7 +167,8 @@ PYSIDE_KEYPAD_KEYS = {
 
 
 class GLWidget(QOpenGLWidget):
-    def __init__(self, msaa, parent=None, delegate=None):
+    def __init__(self, msaa, parent=None, delegate=None,
+                 focus_policy=Qt.FocusPolicy.StrongFocus):
         super().__init__(parent)
         self._last_ctx_size = (-1, -1)
         self._last_fb_size = (-1, -1)
@@ -174,7 +176,7 @@ class GLWidget(QOpenGLWidget):
                            QSizePolicy.Policy.Expanding)
         self.setMinimumSize(16, 16)
         self.setMouseTracking(True)
-        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setFocusPolicy(focus_policy)
 
         self.ctx = GLContext(self, msaa=msaa, delegate=delegate)
 
@@ -301,3 +303,55 @@ class GLWidget(QOpenGLWidget):
 
         self.ctx._handle_key_event(self.ctx.mouse_x, self.ctx.mouse_y, key,
                                    constants.KEY_RELEASE)
+
+
+class GLWidgetFocusable(QtWidgets.QFrame):
+    '''
+    Embeds a GLWidget inside a QFrame which is then used to give us a focus
+    highlight box.  The raw GLWidget doesn't have any focus highlight.  When
+    the QFrame has focus, it passes the key strokes down to the embedded
+    GLWidget.
+    '''
+    def __init__(self, msaa, parent=None, delegate=None):
+        super().__init__(parent)
+
+        # Configure the frame to allow and show focus.
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        # self.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+
+        # On macOS, force it to use the blue ring for focus hilighting.  This
+        # is a no-op on any other OS.
+        self.setAttribute(Qt.WidgetAttribute.WA_MacShowFocusRect, True)
+
+        # Create the GLWidget and save off the ctx value locally so that the
+        # client can use this identically to how they would use a GLWidget.
+        self.gl_widget = GLWidget(None, parent=self,
+                                  focus_policy=Qt.FocusPolicy.NoFocus)
+        self.ctx = self.gl_widget.ctx
+
+        # Pack it tightly inside a layout with small margins that will be used
+        # by the focus highlight.
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(3, 3, 3, 3)
+        layout.addWidget(self.gl_widget)
+
+        # Apply a lightweight style sheet rule to hook into Qt's native focus
+        # palette.  This tells the frame to draw the OS-native focus ring when
+        # targeted
+        self.setStyleSheet('''
+            GLWidgetFocusable {
+                /* border: 1px solid palette(mid); */
+                border-radius: 4px;
+                background-color: transparent;
+            }
+            GLWidgetFocusable:focus {
+                border: 3px solid palette(highlight);
+            }
+        ''')
+
+    def keyPressEvent(self, event):
+        self.gl_widget.keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        self.gl_widget.keyReleaseEvent(event)
