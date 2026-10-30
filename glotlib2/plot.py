@@ -389,6 +389,27 @@ class Plot(GLObject):
 
         self.mouse_state = None
 
+    def handle_mouse_scrolled(self, x, y, dx, dy, shift, alt):
+        dx = max(dx, -99)
+        dx = min(dx, 99)
+        dy = max(dy, -99)
+        dy = min(dy, 99)
+        if self.aspect == SquareAspect:
+            rx = ry = 1 - dy / 100
+        elif shift:
+            rx = 1 + dx / 100
+            ry = 1 - dy / 100
+        elif alt:
+            rx = 1
+            ry = 1 - dy / 100
+        else:
+            rx = ry = 1 - dy / 100
+
+        fx, fy = self._context_to_data(x, y)
+        self._gen_mvp_from_point((fx, fy), (x, y), rx=rx, ry=ry)
+        self._gen_ticks()
+        self._update_shared_axes()
+
     def _add_series(self, cls, points=None, X=None, Y=None, color=None,
                     **kwargs):
         color = colors.make(color, self.color_iter)

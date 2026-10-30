@@ -25,6 +25,137 @@ MOUSE_BUTTONS = {
     glfw.MOUSE_BUTTON_8      : None,
 }
 
+KEY_ACTIONS = {
+    glfw.PRESS      : constants.KEY_PRESS,
+    glfw.RELEASE    : constants.KEY_RELEASE,
+}
+
+GLFW_KEYMAP_TO_GLOTLIB = {
+    glfw.KEY_A              : 'a',
+    glfw.KEY_B              : 'b',
+    glfw.KEY_C              : 'c',
+    glfw.KEY_D              : 'd',
+    glfw.KEY_E              : 'e',
+    glfw.KEY_F              : 'f',
+    glfw.KEY_G              : 'g',
+    glfw.KEY_H              : 'h',
+    glfw.KEY_I              : 'i',
+    glfw.KEY_J              : 'j',
+    glfw.KEY_K              : 'k',
+    glfw.KEY_L              : 'l',
+    glfw.KEY_M              : 'm',
+    glfw.KEY_N              : 'n',
+    glfw.KEY_O              : 'o',
+    glfw.KEY_P              : 'p',
+    glfw.KEY_Q              : 'q',
+    glfw.KEY_R              : 'r',
+    glfw.KEY_S              : 's',
+    glfw.KEY_T              : 't',
+    glfw.KEY_U              : 'u',
+    glfw.KEY_V              : 'v',
+    glfw.KEY_W              : 'w',
+    glfw.KEY_X              : 'x',
+    glfw.KEY_Y              : 'y',
+    glfw.KEY_Z              : 'z',
+    glfw.KEY_0              : '0',
+    glfw.KEY_1              : '1',
+    glfw.KEY_2              : '2',
+    glfw.KEY_3              : '3',
+    glfw.KEY_4              : '4',
+    glfw.KEY_5              : '5',
+    glfw.KEY_6              : '6',
+    glfw.KEY_7              : '7',
+    glfw.KEY_8              : '8',
+    glfw.KEY_9              : '9',
+    glfw.KEY_SPACE          : ' ',
+    glfw.KEY_ENTER          : '\r',
+    glfw.KEY_ESCAPE         : constants.KEY_ESCAPE,
+    glfw.KEY_BACKSPACE      : '\b',
+    glfw.KEY_DELETE         : constants.KEY_DELETE,
+    glfw.KEY_TAB            : '\t',
+    glfw.KEY_UP             : constants.KEY_UP_ARROW,
+    glfw.KEY_DOWN           : constants.KEY_DOWN_ARROW,
+    glfw.KEY_LEFT           : constants.KEY_LEFT_ARROW,
+    glfw.KEY_RIGHT          : constants.KEY_RIGHT_ARROW,
+    glfw.KEY_PAGE_UP        : constants.KEY_PAGE_UP,
+    glfw.KEY_PAGE_DOWN      : constants.KEY_PAGE_DOWN,
+    glfw.KEY_HOME           : constants.KEY_HOME,
+    glfw.KEY_END            : constants.KEY_END,
+    glfw.KEY_LEFT_SHIFT     : constants.KEY_LEFT_SHIFT,
+    glfw.KEY_RIGHT_SHIFT    : constants.KEY_RIGHT_SHIFT,
+    glfw.KEY_LEFT_CONTROL   : constants.KEY_LEFT_CONTROL,
+    glfw.KEY_RIGHT_CONTROL  : constants.KEY_RIGHT_CONTROL,
+    glfw.KEY_LEFT_ALT       : constants.KEY_LEFT_ALT,
+    glfw.KEY_RIGHT_ALT      : constants.KEY_RIGHT_ALT,
+    glfw.KEY_LEFT_SUPER     : constants.KEY_LEFT_SUPER,     # macOS Command
+    glfw.KEY_RIGHT_SUPER    : constants.KEY_RIGHT_SUPER,    # macOS Command
+    glfw.KEY_GRAVE_ACCENT   : '`',
+    glfw.KEY_APOSTROPHE     : "'",
+    glfw.KEY_MINUS          : '-',
+    glfw.KEY_EQUAL          : '=',
+    glfw.KEY_LEFT_BRACKET   : '[',
+    glfw.KEY_RIGHT_BRACKET  : ']',
+    glfw.KEY_SEMICOLON      : ':',
+    glfw.KEY_BACKSLASH      : '\\',
+    glfw.KEY_COMMA          : ',',
+    glfw.KEY_PERIOD         : '.',
+    glfw.KEY_SLASH          : '/',
+
+    glfw.KEY_KP_0           : constants.KEYPAD_0,
+    glfw.KEY_KP_1           : constants.KEYPAD_1,
+    glfw.KEY_KP_2           : constants.KEYPAD_2,
+    glfw.KEY_KP_3           : constants.KEYPAD_3,
+    glfw.KEY_KP_4           : constants.KEYPAD_4,
+    glfw.KEY_KP_5           : constants.KEYPAD_5,
+    glfw.KEY_KP_6           : constants.KEYPAD_6,
+    glfw.KEY_KP_7           : constants.KEYPAD_7,
+    glfw.KEY_KP_8           : constants.KEYPAD_8,
+    glfw.KEY_KP_9           : constants.KEYPAD_9,
+    glfw.KEY_KP_DECIMAL     : constants.KEYPAD_DOT,
+    glfw.KEY_KP_DIVIDE      : constants.KEYPAD_DIVIDE,
+    glfw.KEY_KP_MULTIPLY    : constants.KEYPAD_MULTIPLY,
+    glfw.KEY_KP_SUBTRACT    : constants.KEYPAD_MINUS,
+    glfw.KEY_KP_ADD         : constants.KEYPAD_PLUS,
+    glfw.KEY_KP_EQUAL       : constants.KEYPAD_EQUALS,
+    glfw.KEY_KP_ENTER       : constants.KEYPAD_ENTER,
+
+    glfw.KEY_CAPS_LOCK      : constants.KEY_CAPS_LOCK,
+    glfw.KEY_F1             : constants.KEY_F1,
+    glfw.KEY_F2             : constants.KEY_F2,
+    glfw.KEY_F3             : constants.KEY_F3,
+    glfw.KEY_F4             : constants.KEY_F4,
+    glfw.KEY_F5             : constants.KEY_F5,
+    glfw.KEY_F6             : constants.KEY_F6,
+    glfw.KEY_F7             : constants.KEY_F7,
+    glfw.KEY_F8             : constants.KEY_F8,
+    glfw.KEY_F9             : constants.KEY_F9,
+    glfw.KEY_F10            : constants.KEY_F10,
+    glfw.KEY_F11            : constants.KEY_F11,
+    glfw.KEY_F12            : constants.KEY_F12,
+    glfw.KEY_F13            : constants.KEY_F13,
+    glfw.KEY_F14            : constants.KEY_F14,
+    glfw.KEY_F15            : constants.KEY_F15,
+    glfw.KEY_F16            : constants.KEY_F16,
+    glfw.KEY_F17            : constants.KEY_F17,
+    glfw.KEY_F18            : constants.KEY_F18,
+    glfw.KEY_F19            : constants.KEY_F19,
+    glfw.KEY_F20            : constants.KEY_F20,
+    glfw.KEY_F21            : constants.KEY_F21,
+    glfw.KEY_F22            : constants.KEY_F22,
+    glfw.KEY_F23            : constants.KEY_F23,
+    glfw.KEY_F24            : constants.KEY_F24,
+    glfw.KEY_F25            : constants.KEY_F25,
+    glfw.KEY_INSERT         : constants.KEY_INSERT,
+    glfw.KEY_MENU           : constants.KEY_MENU,
+    glfw.KEY_NUM_LOCK       : constants.KEY_NUM_LOCK,
+    glfw.KEY_PAUSE          : constants.KEY_PAUSE,
+    glfw.KEY_PRINT_SCREEN   : constants.KEY_PRINT_SCREEN,
+    glfw.KEY_SCROLL_LOCK    : constants.KEY_SCROLL_LOCK,
+    glfw.KEY_UNKNOWN        : None,
+}
+
+GLOTLIB_KEYMAP_TO_GLFW = {v: k for k, v in GLFW_KEYMAP_TO_GLOTLIB.items()}
+
 
 class Window:
     def __init__(self, w, h, x=100, y=100, name='', msaa=None, delegate=None):
@@ -45,6 +176,10 @@ class Window:
             self.glfw_window, self._handle_mouse_moved)
         glfw.set_mouse_button_callback(
             self.glfw_window, self._handle_mouse_button_callback)
+        glfw.set_scroll_callback(
+            self.glfw_window, self._handle_mouse_scrolled)
+        glfw.set_key_callback(
+            self.glfw_window, self._handle_key_event)
 
         self._iconified = False
         self.ctx = GLContext(self.glfw_window, msaa=msaa, delegate=delegate)
@@ -115,3 +250,19 @@ class Window:
         self.ctx._handle_mouse_button_callback(self.ctx.mouse_x,
                                                self.ctx.mouse_y, mb, action,
                                                mods)
+
+    def _handle_mouse_scrolled(self, _window, dx, dy):
+        self.ctx._handle_mouse_scrolled(self.ctx.mouse_x, self.ctx.mouse_y,
+                                        dx, dy)
+
+    def _handle_key_event(self, _window, key, _scancode, action, _mods):
+        action = KEY_ACTIONS.get(action)
+        if action is None:
+            return
+
+        key = GLFW_KEYMAP_TO_GLOTLIB.get(key)
+        if key is None:
+            return
+
+        self.ctx._handle_key_event(self.ctx.mouse_x, self.ctx.mouse_y, key,
+                                   action)
