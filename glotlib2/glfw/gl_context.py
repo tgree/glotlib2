@@ -6,9 +6,10 @@ from .. import gl_context
 
 
 class GLContext(gl_context.GLContext):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, glfw_window, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._dirty = False
+        self._glfw_window = glfw_window
 
     def is_active(self):
         if self.opengl_context is None:

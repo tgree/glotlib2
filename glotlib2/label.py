@@ -33,39 +33,33 @@ ALIGNMENTS = {
 
 
 class Label(GLObject):
-    def __init__(self, ctx, gl_parent, pos, text, face=None, font_size=None,
-                 font_oversample_log2=0, theta=0, anchor='SW',
-                 color=(0, 0, 0, 1), visible=True):
-        assert face
-        assert font_size
+    def __init__(self, gl_parent, pos, text, font=None, theta=0, anchor='SW',
+                 color=(0, 0, 0, 1), **kwargs):
+        assert font
 
-        super().__init__(gl_parent)
+        super().__init__(gl_parent, **kwargs)
 
-        self.ctx                  = ctx
-        self.font                 = None
-        self.face                 = face
-        self.font_size            = font_size
-        self.font_oversample_log2 = font_oversample_log2
-        self.pos                  = (int(pos[0]), int(pos[1]))
-        self.theta                = theta
-        self.color                = color
-        self.visible              = visible
-        self.text                 = None
-        self.new_text             = text
-        self.mvp                  = None
-        alignment                 = ALIGNMENTS[anchor]
-        self.halign               = alignment[0]
-        self.valign               = alignment[1]
-        self.width                = 0
-        self.height               = 0
-        self.nvertices            = 0
-        self.vao                  = None
-        self.geom_vbo             = None
-        self.tex_vbo              = None
+        self.font            = font
+        self.pos             = (int(pos[0]), int(pos[1]))
+        self.theta           = theta
+        self.color           = color
+        self.text            = text
+        self.mvp             = None
+        alignment            = ALIGNMENTS[anchor]
+        self.halign          = alignment[0]
+        self.valign          = alignment[1]
+        self.width           = 0
+        self.height          = 0
+        self.vertices        = None
+        self.tex_coords      = None
+        self.vao             = None
+        self.geom_vbo        = None
+        self.tex_vbo         = None
+        self.nbound_vertices = 0
+
+        self._gen_vertices(text)
 
     def _init_gl(self):
-        self.font     = self.face(self.font_size,
-                                  oversample_log2=self.font_oversample_log2)
         self.vao      = GL.glGenVertexArrays(1)
         self.geom_vbo = GL.glGenBuffers(1)
         self.tex_vbo  = GL.glGenBuffers(1)
@@ -77,8 +71,19 @@ class Label(GLObject):
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.tex_vbo)
         GL.glVertexAttribPointer(1, 2, GL.GL_FLOAT, GL.GL_FALSE, 0, c_void_p(0))
         GL.glEnableVertexAttribArray(1)
+        GL.glBindVertexArray(0)
 
-        self._gen_text_vertices(self.new_text)
+    def _paint_gl(self):
+        if not self.nbound_vertices:
+            return
+
+        mvp = self.ctx.mvp @ self.mvp
+        GL.glBindVertexArray(self.vao)
+        self.font.bind(0)
+        self.ctx.programs.text.use(0, mvp, self.font, color=self.color)
+        GL.glEnable(GL.GL_BLEND)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.nbound_vertices)
+        GL.glDisable(GL.GL_BLEND)
 
     def _update_mvp(self):
         dx = round(self.width * self.halign / 2)
@@ -89,102 +94,67 @@ class Label(GLObject):
             matrix.translate(-dx, -dy)
             )
 
-    def _gen_text_vertices(self, text):
-        if text == self.text:
-            return False
-
+    def _gen_vertices(self, text):
+        '''
+        May be called without an active GL context to update the vertices list
+        and get new text dimensions.  _upload_vertices() will be deferred to
+        the next update.
+        '''
         vertices, tex_coords, width, height = self.font.gen_vertices_left(text)
 
-        self.text      = text
-        self.nvertices = len(vertices)
-        self.width     = width
-        self.height    = height
-        if self.nvertices:
-            GL.glBindVertexArray(self.vao)
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.geom_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, vertices, GL.GL_STATIC_DRAW)
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.tex_vbo)
-            GL.glBufferData(GL.GL_ARRAY_BUFFER, tex_coords, GL.GL_STATIC_DRAW)
-
+        self.text            = text
+        self.vertices        = vertices
+        self.tex_coords      = tex_coords
+        self.width           = width
+        self.height          = height
         self._update_mvp()
+        self.ctx._defer(self._upload_vertices)
+
+    def _upload_vertices(self):
+        self.nbound_vertices = len(self.vertices)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.geom_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, self.vertices,
+                        GL.GL_STATIC_DRAW)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.tex_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, self.tex_coords,
+                        GL.GL_STATIC_DRAW)
+
         return True
 
-    def _set_text(self, text):
-        self.new_text = text
+    def set_text(self, text):
+        self._gen_vertices(text)
 
     def _set_pos(self, pos):
         self.pos = (int(pos[0]), int(pos[1]))
         self._update_mvp()
 
+    def set_pos(self, pos):
+        self.ctx._defer(self._set_pos, pos)
+
     def _set_theta(self, theta):
         self.theta = theta
         self._update_mvp()
 
-    def draw(self):
-        if self.new_text != self.text:
-            self._gen_text_vertices(self.new_text)
-        if not self.nvertices:
-            return
-
-        mvp = self.ctx.mvp @ self.mvp
-        GL.glBindVertexArray(self.vao)
-        self.font.bind(0)
-        self.ctx.programs.text.use(0, mvp, self.font, color=self.color)
-        GL.glEnable(GL.GL_BLEND)
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.nvertices)
-        GL.glDisable(GL.GL_BLEND)
-
-    def draw_batched(self):
-        if self.new_text != self.text:
-            self._gen_text_vertices(self.new_text)
-        if not self.nvertices or not self.visible:
-            return
-
-        mvp = self.ctx.mvp @ self.mvp
-        self.ctx.programs.text.uniformMatrix4fv('u_mvp', mvp)
-        GL.glBindVertexArray(self.vao)
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.nvertices)
-
-    def set_text(self, text):
-        self._set_text(text)
-        self.ctx.mark_dirty()
-
-    def set_pos(self, pos):
-        self._set_pos(pos)
-        self.ctx.mark_dirty()
-
     def set_theta(self, theta):
-        self._set_theta(theta)
-        self.ctx.mark_dirty()
-
-    def show(self):
-        self.visible = True
-        self.ctx.mark_dirty()
-
-    def hide(self):
-        self.visible = False
-        self.ctx.mark_dirty()
+        self.ctx._defer(self._set_theta, theta)
 
 
 class FlexLabel(Label):
-    def __init__(self, ctx, gl_parent, pos, *args, **kwargs):
-        super().__init__(ctx, gl_parent, (0, 0), *args, **kwargs)
+    def __init__(self, gl_parent, pos, *args, **kwargs):
+        super().__init__(gl_parent, (0, 0), *args, **kwargs)
         self.flex_pos = pos
 
     def _init_gl(self):
+        super()._init_gl()
         self.pos = (int(self.flex_pos[0] * self.ctx.ctx_w),
                     int(self.flex_pos[1] * self.ctx.ctx_h))
-        super()._init_gl()
+        self._update_mvp()
 
-    def _handle_resize(self):
-        self._set_flex_pos(self.flex_pos)
-
-    def _set_flex_pos(self, pos):
-        self.flex_pos = pos
-        pos           = (pos[0] * self.ctx.ctx_w,
-                         pos[1] * self.ctx.ctx_h)
-        super()._set_pos(pos)
+    def _resize_gl_ctx(self, w, h):
+        self.set_pos(self.flex_pos)
 
     def set_pos(self, pos):
-        self._set_flex_pos(pos)
-        self.ctx.mark_dirty()
+        self.flex_pos = pos
+        pos = (pos[0] * self.ctx.ctx_w,
+               pos[1] * self.ctx.ctx_h)
+        super().set_pos(pos)

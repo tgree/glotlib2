@@ -26,7 +26,7 @@ def _draw_windows():
     for w in WINDOWS:
         if w.ctx._dirty:
             w.ctx._dirty = False
-            w.ctx._paint_gl()
+            w.ctx._tree_paint_gl()
             w._swap_buffers()
 
 
