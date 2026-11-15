@@ -4,7 +4,8 @@ import numpy as np
 def ortho(l, r, b, t, n, f, dtype=np.float32):
     '''
     An orthographic projection that maps coordinates in the specified box to
-    the unit cube.
+    the unit cube defined by [-1, 1, -1, 1, -1, 1] (it has "radius" 1 from the
+    origin).
 
     This matrix starts by translating the center point of each component to the
     origin and then scaling the resulting vector.
