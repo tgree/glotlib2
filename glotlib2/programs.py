@@ -1,6 +1,25 @@
 from .program import BuiltinProgram
 
 
+class SingleRectProgram(BuiltinProgram):
+    UNIFORMS = [
+        'u_mvp',
+        'u_z',
+        'u_color',
+        'u_rect',
+    ]
+
+    def __init__(self):
+        super().__init__('rect.vert', 'frag.frag', uniforms=self.UNIFORMS)
+
+    def use(self, x1, y1, x2, y2, z, mvp, color=(0.5, 0.5, 0.5, 1)):
+        self.useProgram()
+        self.uniformMatrix4fv('u_mvp', mvp)
+        self.uniform1f('u_z', z)
+        self.uniform4f('u_color', *color)
+        self.uniform4f('u_rect', x1, y1, x2, y2)
+
+
 class MiterLineProgram(BuiltinProgram):
     UNIFORMS = [
         'u_line_vertices',
@@ -88,9 +107,11 @@ class Programs:
         self.square_line = None
         self.frag_points = None
         self.text        = None
+        self.single_rect = None
 
     def load(self):
         self.miter_line  = MiterLineProgram()
         self.square_line = SquareLineProgram()
         self.frag_points = FragPointsProgram()
         self.text        = TextProgram()
+        self.single_rect = SingleRectProgram()
