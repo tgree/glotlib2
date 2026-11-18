@@ -165,14 +165,19 @@ class Plot(GLObject):
         # single-precision float.  If we get too close to the limits then lines
         # displayed on the screen randomly jump around or disappear.  This can
         # also happen if we pan too far from the origin.  To correct this, we
-        # do a renomralization step on the actual data points in double-
+        # do a renormalization step on the actual data points in double-
         # precision math to remap the part of the data space that we want to
         # look at to the unit cube.  This is accomplished by multiplying all
         # the original double-precision data points by the renormalization
         # matrix.  Because it requires altering all of the data buffers stored
         # on the GPU, renormalization is an expensive operation.
-        self.rmatrix  = None
-        self.rmatrixi = None
+        #
+        # The default matrices set here will get overridden as soon as our
+        # context is displayed and has actual screen dimensions.  These are
+        # just simple placeholders so that clients can do things like
+        # series.set_x_y_data() before the plot has even been displayed.
+        self.rmatrix  = matrix.ortho(-1, 1, -1, 1, -1, 1, dtype=np.float64)
+        self.rmatrixi = matrix.unortho(-1, 1, -1, 1, -1, 1, dtype=np.float64)
 
         # Model-view-projection matrix.  This matrix takes data points in the
         # renormalized space and maps them to screen coordinates.  Whenever a
