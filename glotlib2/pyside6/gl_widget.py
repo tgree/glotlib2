@@ -2,7 +2,7 @@ import os
 import traceback
 
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtGui import QSurfaceFormat, QOpenGLContext
+from PySide6.QtGui import QSurfaceFormat, QOpenGLContext, QCursor
 from PySide6.QtWidgets import QSizePolicy
 from PySide6.QtCore import Qt
 from PySide6 import QtWidgets
@@ -208,8 +208,10 @@ class GLWidget(QOpenGLWidget):
             ctx_w, ctx_h = self.width(), self.height()
             surface_dim = self.context().surface().size()
             fb_w, fb_h = surface_dim.width(), surface_dim.height()
+            global_pos = QCursor.pos()
+            local_pos = self.mapFromGlobal(global_pos)
             self.ctx._init_ctx(QOpenGLContext.currentContext(), ctx_w, ctx_h,
-                               fb_w, fb_h)
+                               fb_w, fb_h, local_pos.x(), ctx_h - local_pos.y())
         except Exception as e:
             self._dump_and_exit(e, -2)
 

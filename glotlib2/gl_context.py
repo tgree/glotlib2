@@ -172,7 +172,8 @@ class GLContext(GLObject):
         self._event_queue.enqueue(func, *args, **kwargs)
         self.mark_dirty()
 
-    def _init_ctx(self, opengl_context, ctx_w, ctx_h, fb_w, fb_h):
+    def _init_ctx(self, opengl_context, ctx_w, ctx_h, fb_w, fb_h, mouse_x,
+                  mouse_y):
         '''
         Called by the native window manager (or whatever is creating contexts)
         with the context bound to the current thread and handing us some
@@ -184,6 +185,9 @@ class GLContext(GLObject):
         self.ctx_w, self.ctx_h = ctx_w, ctx_h
         self.fb_w, self.fb_h = fb_w, fb_h
         self.mvp = matrix.ortho(0, self.ctx_w, 0, self.ctx_h, -1, 1)
+
+        self.mouse_x = mouse_x
+        self.mouse_y = mouse_y
 
         self._init_gl()
         self._tree_init_new_gl_children()

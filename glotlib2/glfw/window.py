@@ -196,8 +196,9 @@ class Window:
         assert current_context is not None
         ctx_w, ctx_h = glfw.get_window_size(self.glfw_window)
         fb_w, fb_h = glfw.get_framebuffer_size(self.glfw_window)
+        mouse_x, mouse_y = glfw.get_cursor_pos(self.glfw_window)
         self.ctx._init_ctx(ctypes.cast(current_context, ctypes.c_void_p).value,
-                           ctx_w, ctx_h, fb_w, fb_h)
+                           ctx_w, ctx_h, fb_w, fb_h, mouse_x, ctx_h - mouse_y)
         self.ctx._tree_resize_gl_ctx(ctx_w, ctx_h)
         self.ctx._tree_resize_gl_fb(fb_w, fb_h)
 
