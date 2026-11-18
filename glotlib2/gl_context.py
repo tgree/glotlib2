@@ -204,7 +204,8 @@ class GLContext(GLObject):
             GL.glEnable(GL.GL_MULTISAMPLE)
 
         GL.glClearColor(1, 1, 1, 1)
-        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+        GL.glBlendFuncSeparate(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA,
+                               GL.GL_ZERO, GL.GL_ONE)
 
     def _paint_gl(self):
         '''
