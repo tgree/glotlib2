@@ -165,7 +165,7 @@ class Plot(GLObject):
         # single-precision float.  If we get too close to the limits then lines
         # displayed on the screen randomly jump around or disappear.  This can
         # also happen if we pan too far from the origin.  To correct this, we
-        # do a renomralization step on the actual data points in double-
+        # do a renormalization step on the actual data points in double-
         # precision math to remap the part of the data space that we want to
         # look at to the unit cube.  This is accomplished by multiplying all
         # the original double-precision data points by the renormalization
