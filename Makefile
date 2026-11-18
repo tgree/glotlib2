@@ -1,5 +1,5 @@
 MODULE := glotlib2
-MODULE_VERS := 0.9.0
+MODULE_VERS := 0.9.1
 MODULES := $(wildcard \
 	README.md \
 	LICENSE \
